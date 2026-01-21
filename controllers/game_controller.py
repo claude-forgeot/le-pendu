@@ -11,7 +11,7 @@ Trello card.
 # Import the functions from the model, view, and utility modules
 from models import game_engine
 from UI import console_view
-from utils import word_manager
+from utils import word_manager, language_manager
 
 def start_game():
     """
@@ -32,7 +32,7 @@ def start_game():
 
     # Handle case where no word could be loaded
     if not secret_word:
-        print(f"Could not start the game. No words available for '{language}' and '{difficulty}' difficulty.")
+        print(language_manager.get_text('game_start_error', language=language, difficulty=difficulty))
         return
 
     max_errors = len(console_view.HANGMAN_PICS) - 1
@@ -58,16 +58,16 @@ def start_game():
         # d. Process the letter
         # We check if the letter was already played to provide specific feedback
         if letter in game_state["letters_played"]:
-            console_view.display_message("You have already played this letter. Try another one.", is_error=True)
+            console_view.display_message(language_manager.get_text('already_played'), is_error=True)
             input("Press Enter to continue...") # Pause to let the user read the message
             continue # Skip the rest of the loop and start over
 
         # The play_letter function handles the core logic
         was_processed = game_engine.play_letter(game_state, letter)
-        
+
         # If the input was invalid (e.g., not a single letter), inform the user.
         if not was_processed:
-            console_view.display_message("Invalid input. Please enter a single letter.", is_error=True)
+            console_view.display_message(language_manager.get_text('invalid_input'), is_error=True)
             input("Press Enter to continue...") # Pause for user
             continue
 

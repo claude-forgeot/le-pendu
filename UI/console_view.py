@@ -10,6 +10,7 @@ It adapts the Trello card: "[VIEW] Vue Console (CLI)" for a procedural style.
 import os
 import sys
 from typing import List, Tuple, Optional
+from utils import language_manager
 
 # ASCII art for the hangman, corresponding to the number of errors.
 # The index represents the number of errors (0 errors = index 0, 1 error = index 1, etc.).
@@ -100,25 +101,32 @@ def display_main_menu() -> Optional[Tuple[str, str]]:
     """
     clear_screen()
     print("H H"*15)
-    print("   WELCOME TO THE HANGMAN GAME")
+    print(f"   {language_manager.get_text('welcome')}")
     print("H H"*15)
 
     # 1. Language selection
     language = ""
     while language not in ['fr', 'en']:
-        choice = input("Choose your language (fr/en): ").lower()
+        choice = input(f"{language_manager.get_text('language_prompt')}: ").lower()
         if choice == 'quit':
             return None
-        language = choice
+        if choice in ['fr', 'en']:
+            language = choice
+            language_manager.set_language(language)
+        else:
+            print(language_manager.get_text('invalid_choice'))
 
     # 2. Difficulty selection
     difficulty = ""
     while difficulty not in ['facile', 'moyen', 'difficile']:
-        choice = input("Choose difficulty (facile/moyen/difficile): ").lower()
+        choice = input(f"{language_manager.get_text('difficulty_prompt')}: ").lower()
         if choice == 'quit':
             return None
-        difficulty = choice
-    
+        if choice in ['facile', 'moyen', 'difficile']:
+            difficulty = choice
+        else:
+            print(language_manager.get_text('invalid_choice'))
+
     return language, difficulty
 
 def display_game_state(masked_word: str, played_letters: List[str], errors: int, max_errors: int):
@@ -139,14 +147,14 @@ def display_game_state(masked_word: str, played_letters: List[str], errors: int,
     """
     # Ensure errors do not exceed the number of available pictures.
     pic_index = min(errors, len(HANGMAN_PICS) - 1)
-    
+
     print(HANGMAN_PICS[pic_index])
     print("\n")
-    print(f"Word: {masked_word}")
+    print(f"{language_manager.get_text('word_label')}: {masked_word}")
     print("\n")
-    print(f"Errors: {errors}/{max_errors}")
+    print(f"{language_manager.get_text('errors_label')}: {errors}/{max_errors}")
     # Display played letters in a sorted, readable format.
-    print(f"Played letters: {', '.join(sorted(played_letters))}")
+    print(f"{language_manager.get_text('played_letters_label')}: {', '.join(sorted(played_letters))}")
     print("\n" + "H H "*15 + "\n")
 
 def get_letter_input() -> str:
@@ -157,7 +165,7 @@ def get_letter_input() -> str:
     Returns:
         str: The letter entered by the user, converted to uppercase.
     """
-    return input("Please enter a letter: ").upper()
+    return input(f"{language_manager.get_text('guess_prompt')}: ").upper()
 
 
 def display_message(message: str, is_error: bool = False):
@@ -177,8 +185,8 @@ def display_win_message(secret_word: str):
     Displays the winning message, including the secret word.
     """
     print("H H "*15)
-    print("CONGRATULATIONS! You won!")
-    print(f"The word was: {secret_word}")
+    print(language_manager.get_text('win_msg'))
+    print(f"{language_manager.get_text('secret_word_was')}: {secret_word}")
     print("H H "*15)
 
 
@@ -187,12 +195,12 @@ def display_loss_message(secret_word: str):
     Displays the losing message, revealing the secret word.
     """
     print("H H "*15)
-    print(f"GAME OVER! You lost. The hangman is complete.")
-    print(f"The word was: {secret_word}")
+    print(language_manager.get_text('lose_msg'))
+    print(f"{language_manager.get_text('secret_word_was')}: {secret_word}")
     print("H H "*15)
 
 def display_goodbye_message():
     """
     Displays a goodbye message when the user quits.
     """
-    print("\nThanks for playing. Goodbye!\n")
+    print(f"\n{language_manager.get_text('goodbye_msg')}\n")

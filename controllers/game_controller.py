@@ -10,7 +10,7 @@ Trello card.
 
 # Import the functions from the model, view, and utility modules
 from models import game_engine
-from views import console_view
+from UI import console_view
 from utils import word_manager
 
 def start_game():

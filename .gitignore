@@ -1,0 +1,17 @@
+.DS_Store
+Thumbs.db
+
+node_modules/
+vendor/
+.venv/
+
+dist/
+build
+*.exe
+
+.env
+.env.local
+
+*.log
+npm-debug.log
+

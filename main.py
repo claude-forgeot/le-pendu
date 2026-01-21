@@ -1,53 +1,60 @@
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import pygame
 import sys
-
-# Initialisation de Pygame
-pygame.init()
-pygame.mixer.init()
-
-# Configuration initiale (Fenêtre redimensionnable - Taille réduite au lancement)
-WIDTH, HEIGHT = 900, 600
-screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
-pygame.display.set_caption("Le Pendu - Interface Responsive")
-
-# Couleurs
-WHITE = (255, 255, 255)
-GREEN = (46, 204, 113)
-ORANGE = (230, 126, 34)
-RED = (231, 76, 60)
-DARK_BLUE = (44, 62, 80)      
-PURPLE = (155, 89, 182)        
-GOLD = (241, 196, 15)          
-
-# Couleurs Hover
-GREEN_H = (82, 222, 139)
-ORANGE_H = (255, 159, 67)
-RED_H = (255, 107, 91)
-DARK_BLUE_H = (52, 73, 94)
-PURPLE_H = (187, 143, 206)
-GOLD_H = (244, 208, 63)
-
-# Chargement des ressources
-try:
-    # Modification des chemins vers les images
-    img_background = pygame.image.load("./assets/images/home.jpg")
-    img_logo = pygame.image.load("./assets/images/logo.png")
-    img_fr = pygame.image.load("./assets/images/france.png")
-    img_us = pygame.image.load("./assets/images/usa.png")
-    
-    # Modification du chemin vers l'audio
-    pygame.mixer.music.load("./assets/audios/main.mp3")
-    pygame.mixer.music.play(-1)
-except pygame.error as e:
-    print(f"Erreur de chargement des ressources : {e}")
+from controllers import game_controller
 
 def draw_rounded_button(surface, color, rect, text, font):
     pygame.draw.rect(surface, color, rect, border_radius=int(rect.height / 3))
-    text_surf = font.render(text, True, WHITE)
+    text_surf = font.render(text, True, color) # Changed WHITE to color to make button text color customizable
     text_rect = text_surf.get_rect(center=rect.center)
     surface.blit(text_surf, text_rect)
 
-def main():
+def main_gui():
+    # Initialisation de Pygame
+    pygame.init()
+    pygame.mixer.init()
+
+    # Configuration initiale (Fenêtre redimensionnable - Taille réduite au lancement)
+    WIDTH, HEIGHT = 900, 600
+    screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
+    pygame.display.set_caption("Le Pendu - Interface Responsive")
+
+    # Couleurs
+    WHITE = (255, 255, 255)
+    GREEN = (46, 204, 113)
+    ORANGE = (230, 126, 34)
+    RED = (231, 76, 60)
+    DARK_BLUE = (44, 62, 80)      
+    PURPLE = (155, 89, 182)        
+    GOLD = (241, 196, 15)          
+
+    # Couleurs Hover
+    GREEN_H = (82, 222, 139)
+    ORANGE_H = (255, 159, 67)
+    RED_H = (255, 107, 91)
+    DARK_BLUE_H = (52, 73, 94)
+    PURPLE_H = (187, 143, 206)
+    GOLD_H = (244, 208, 63)
+
+    # Chargement des ressources
+    try:
+        # Modification des chemins vers les images
+        img_background = pygame.image.load("./assets/images/home.jpg")
+        img_logo = pygame.image.load("./assets/images/logo.png")
+        img_fr = pygame.image.load("./assets/images/france.png")
+        img_us = pygame.image.load("./assets/images/usa.png")
+        
+        # Modification du chemin vers l'audio
+        pygame.mixer.music.load("./assets/audios/main.mp3")
+        pygame.mixer.music.play(-1)
+    except pygame.error as e:
+        print(f"Erreur de chargement des ressources : {e}")
+        # Optionally, handle the error more gracefully, e.g., by quitting or using default images
+        pygame.quit()
+        sys.exit()
+
     running = True
     while running:
         win_w, win_h = screen.get_size()
@@ -58,7 +65,7 @@ def main():
         screen.blit(bg_scaled, (0, 0))
 
         # Logo responsive (Taille diminuée)
-        logo_w = int(win_w * 0.22) 
+        logo_w = int(win_w * 0.22)
         if logo_w < 180: logo_w = 180
         logo_ratio = logo_w / img_logo.get_width()
         logo_h = int(img_logo.get_height() * logo_ratio)
@@ -66,7 +73,7 @@ def main():
         screen.blit(logo_scaled, (30, 30))
 
         # Drapeaux en haut à droite (Taille augmentée)
-        flag_w = int(win_w * 0.08) 
+        flag_w = int(win_w * 0.08)
         if flag_w < 60: flag_w = 60
         flag_h = int(flag_w * 0.66)
         
@@ -78,9 +85,9 @@ def main():
         screen.blit(fr_scaled, (win_w - (flag_w * 2) - 60, 30))
 
         # Dimensions des boutons
-        btn_w = int(win_w * 0.22) 
-        btn_h = int(win_h * 0.09) 
+        btn_w = int(win_w * 0.22)
         if btn_w < 220: btn_w = 220
+        btn_h = int(win_h * 0.09)
         if btn_h < 60: btn_h = 60
         
         font_size = int(btn_h * 0.45)
@@ -132,4 +139,9 @@ def main():
     sys.exit()
 
 if __name__ == "__main__":
-    main()
+    print(f"sys.argv: {sys.argv}")
+    # Check for a command-line argument to run the CLI version
+    if "--cli" in sys.argv:
+        game_controller.start_game()
+    else:
+        main_gui()

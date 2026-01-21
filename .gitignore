@@ -1,18 +1,65 @@
+# Operating System Files
 .DS_Store
 Thumbs.db
 
-node_modules/
-vendor/
-.venv/
+# Python Cache and Compiled Files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyc
+*.pyo
+*.pyd
 
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Claude Code Files
+.claude
+.claude_code/
+.claude_history
+.aider*
+CLAUDE.md
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# Distribution and Build
 dist/
-build
+build/
+*.egg-info/
+*.egg
 *.exe
 
+# Environment Variables
 .env
 .env.local
 
+# Logs
 *.log
 npm-debug.log
+logs/*.log
 
+# Test Coverage
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+*.cover
+
+# Dependencies
+node_modules/
+vendor/
+
+# Project Specific
 trello_pendu_advanced.md

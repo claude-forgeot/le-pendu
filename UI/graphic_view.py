@@ -4,6 +4,7 @@ Contient toute la logique de l'interface utilisateur avec Pygame
 """
 import pygame
 import sys
+from utils import language_manager
 
 def draw_rounded_button(surface, color, rect, text, font):
     """
@@ -128,24 +129,29 @@ def main_gui():
             """Retourne la couleur hover si la souris est sur le bouton"""
             return hover_c if rect.collidepoint(mouse_pos) else normal_c
 
-        # Dessin des boutons
-        draw_rounded_button(screen, get_color(rect_facile, GREEN, GREEN_H), rect_facile, "FACILE", font)
-        draw_rounded_button(screen, get_color(rect_normal, ORANGE, ORANGE_H), rect_normal, "NORMAL", font)
-        draw_rounded_button(screen, get_color(rect_difficile, RED, RED_H), rect_difficile, "DIFFICILE", font)
-        draw_rounded_button(screen, get_color(rect_infini, DARK_BLUE, DARK_BLUE_H), rect_infini, "INFINI", font)
-        draw_rounded_button(screen, get_color(rect_versus, PURPLE, PURPLE_H), rect_versus, "VERSUS", font)
-        draw_rounded_button(screen, get_color(rect_scores, GOLD, GOLD_H), rect_scores, "SCORES", font)
+        # Dessin des boutons avec textes traduits
+        draw_rounded_button(screen, get_color(rect_facile, GREEN, GREEN_H), rect_facile, language_manager.get_text("button_facile"), font)
+        draw_rounded_button(screen, get_color(rect_normal, ORANGE, ORANGE_H), rect_normal, language_manager.get_text("button_normal"), font)
+        draw_rounded_button(screen, get_color(rect_difficile, RED, RED_H), rect_difficile, language_manager.get_text("button_difficile"), font)
+        draw_rounded_button(screen, get_color(rect_infini, DARK_BLUE, DARK_BLUE_H), rect_infini, language_manager.get_text("button_infini"), font)
+        draw_rounded_button(screen, get_color(rect_versus, PURPLE, PURPLE_H), rect_versus, language_manager.get_text("button_versus"), font)
+        draw_rounded_button(screen, get_color(rect_scores, GOLD, GOLD_H), rect_scores, language_manager.get_text("button_scores"), font)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if rect_facile.collidepoint(event.pos): print("Mode Facile")
+                if rect_facile.collidepoint(event.pos):
+                    print(language_manager.get_text("mode_easy"))
                 # Détection clic drapeaux
                 fr_rect = pygame.Rect(win_w - (flag_w * 2) - 60, 30, flag_w, flag_h)
                 us_rect = pygame.Rect(win_w - flag_w - 30, 30, flag_w, flag_h)
-                if fr_rect.collidepoint(event.pos): print("Langue : FR")
-                if us_rect.collidepoint(event.pos): print("Language : US")
+                if fr_rect.collidepoint(event.pos):
+                    language_manager.set_language("fr")
+                    print("Langue changée: Français")
+                if us_rect.collidepoint(event.pos):
+                    language_manager.set_language("en")
+                    print("Language changed: English")
 
         pygame.display.flip()
 

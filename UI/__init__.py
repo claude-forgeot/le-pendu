@@ -3,13 +3,14 @@ Module UI - Interfaces utilisateur pour le jeu du Pendu
 Contient les vues graphique (Pygame) et console (CLI)
 """
 
-# Import des fonctions principales des vues
-from .graphic_view import main_gui, draw_rounded_button
+from .graphic_view import main_gui
 from . import console_view
+from . import constants
+from . import pygame_utils
 
-# Exports explicites
 __all__ = [
     'main_gui',
-    'draw_rounded_button',
-    'console_view'
+    'console_view',
+    'constants',
+    'pygame_utils'
 ]

@@ -75,14 +75,14 @@ def initialize_game():
     pygame.mixer.music.stop()
     pygame.mixer.stop()
 
-    # Lancement de la musique normal.mp3 avec un départ à 5 secondes
-    normal_audio = os.path.join("assets", "audios", "normal.mp3")
+    # Lancement de la musique normal.ogg avec un départ à 5 secondes
+    normal_audio = os.path.join("assets", "audios", "normal.ogg")
     if os.path.exists(normal_audio):
         try:
             pygame.mixer.music.load(normal_audio)
             pygame.mixer.music.play(-1, start=5.0)
         except Exception as e:
-            print(f"Erreur audio normal.mp3: {e}")
+            print(f"Erreur audio normal.ogg: {e}")
 
     current_lang = language_manager.get_current_language()
     secret_word = word_manager.get_word(current_lang, "moyen")
@@ -123,7 +123,7 @@ def play_win_sequence(secret_word):
         current_win_bg = pygame.transform.scale(pygame.image.load(win_bg_path).convert(), (constants.WIDTH, constants.HEIGHT))
 
     # Lancement de l'audio de victoire
-    win_audio_path = os.path.join("assets", "audios", "victoire.mp3")
+    win_audio_path = os.path.join("assets", "audios", "victoire.ogg")
     if os.path.exists(win_audio_path):
         try:
             pygame.mixer.music.load(win_audio_path)
@@ -184,11 +184,11 @@ def play_win_sequence(secret_word):
 
 
 def play_lose_sequence(secret_word, state):
-    """Play the loss sequence with macron.mp4 and macron.mp3 (12s to 17s)."""
+    """Play the loss sequence with macron.mp4 and macron.ogg (12s to 17s)."""
     pygame.mixer.music.stop()
     
     video_path = os.path.join("assets", "vidéo", "macron.mp4")
-    audio_path = os.path.join("assets", "audios", "macron.mp3")
+    audio_path = os.path.join("assets", "audios", "macron.ogg")
     
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():

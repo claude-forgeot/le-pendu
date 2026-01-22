@@ -145,6 +145,19 @@ def main_gui():
                 if rect_facile.collidepoint(event.pos):
                     print(language_manager.get_text("mode_easy"))
 
+                # Lancement du Mode Normal
+                if rect_normal.collidepoint(event.pos):
+                    pygame_utils.play_click_sound()
+                    pygame.mixer.music.stop()
+                    pygame.mixer.stop()
+                    pygame.quit()
+                    normal_mode_path = os.path.join(
+                        constants.BASE_DIR, "UI", "normal_mode_view.py"
+                    )
+                    subprocess.Popen([sys.executable, normal_mode_path])
+                    sys.exit()
+
+                # Lancement du Mode Difficile
                 if rect_difficile.collidepoint(event.pos):
                     pygame_utils.play_click_sound()
                     pygame.mixer.music.stop()

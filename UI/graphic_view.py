@@ -142,8 +142,18 @@ def main_gui():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
+                
+                # Lancement du Mode Facile
                 if rect_facile.collidepoint(event.pos):
-                    print(language_manager.get_text("mode_easy"))
+                    pygame_utils.play_click_sound()
+                    pygame.mixer.music.stop()
+                    pygame.mixer.stop()
+                    pygame.quit()
+                    easy_mode_path = os.path.join(
+                        constants.BASE_DIR, "UI", "easy_mode_view.py"
+                    )
+                    subprocess.Popen([sys.executable, easy_mode_path])
+                    sys.exit()
 
                 # Lancement du Mode Normal
                 if rect_normal.collidepoint(event.pos):

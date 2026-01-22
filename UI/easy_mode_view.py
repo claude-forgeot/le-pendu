@@ -77,8 +77,8 @@ def initialize_game():
     pygame.mixer.music.stop()
     pygame.mixer.stop()
 
-    # Musique facile.mp3
-    music_path = os.path.join("assets", "audios", "facile.mp3")
+    # Musique facile.ogg
+    music_path = os.path.join("assets", "audios", "facile.ogg")
     if os.path.exists(music_path):
         try:
             pygame.mixer.music.load(music_path)
@@ -123,7 +123,7 @@ def use_fake_hint(state, secret):
 
 
 def play_win_sequence(secret_word):
-    """Win: Fade black, background penduewin.jpg, wait 7s of victoire.mp3."""
+    """Win: Fade black, background penduewin.jpg, wait 7s of victoire.ogg."""
     pygame.mixer.music.stop()
     
     # Tentative de chargement du bg spécifique victoire
@@ -133,7 +133,7 @@ def play_win_sequence(secret_word):
         current_bg = pygame.transform.scale(pygame.image.load(win_bg_path).convert(), (constants.WIDTH, constants.HEIGHT))
 
     # Son victoire
-    audio_path = os.path.join("assets", "audios", "victoire.mp3")
+    audio_path = os.path.join("assets", "audios", "victoire.ogg")
     if os.path.exists(audio_path):
         pygame.mixer.music.load(audio_path)
         pygame.mixer.music.play()

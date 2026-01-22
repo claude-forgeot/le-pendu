@@ -1,5 +1,3 @@
-# UI/hard_mode_view.py
-
 """
 Hard mode view for the Hangman game.
 Features: 30s timer, 5 max errors, video on loss.
@@ -11,6 +9,7 @@ import sys
 import os
 import cv2
 import random
+import subprocess
 
 # Add project root to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -77,44 +76,112 @@ def initialize_game():
     return game_state, secret_word, timer
 
 
-def play_lose_sequence(secret_word, state):
-    """Play the loss sequence with video."""
-    draw_interface(state, secret_word, 0, pygame.mouse.get_pos())
-    pygame.display.flip()
-    pygame.time.delay(600)
+def return_to_main_menu():
+    """Relance le menu principal de manière indépendante et ferme ce script."""
     pygame.mixer.music.stop()
+    pygame.mixer.stop()
+    pygame.quit()
+    
+    # On cherche le chemin de main.py (à la racine)
+    main_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "main.py")
+    
+    if os.path.exists(main_path):
+        subprocess.Popen([sys.executable, main_path])
+    else:
+        # Si on est déjà à la racine
+        subprocess.Popen([sys.executable, "main.py"])
+        
+    sys.exit()
 
+
+def play_win_sequence():
+    """Sequence for winning: black fade, winhard image + winhard.mp3 audio, then win screen."""
+    pygame.mixer.music.stop()
+    
+    # 1. Fondu au noir
     fade = pygame.Surface((constants.WIDTH, constants.HEIGHT))
     fade.fill((0, 0, 0))
-    for alpha in range(0, 255, 15):
+    for alpha in range(0, 255, 5):
+        screen.blit(img_bg, (0, 0))
         fade.set_alpha(alpha)
         screen.blit(fade, (0, 0))
         pygame.display.flip()
         pygame.time.delay(10)
-        pygame.event.pump()
 
-    cap = cv2.VideoCapture(constants.VIDEO_LOSE_HARD)
+    # 2. Image et Audio
+    win_img_path = os.path.join("assets", "images", "winhard.png")
+    win_audio_path = os.path.join("assets", "sounds", "winhard.mp3")
+    
+    if os.path.exists(win_img_path):
+        win_img = pygame.image.load(win_img_path).convert()
+        win_img = pygame.transform.scale(win_img, (constants.WIDTH, constants.HEIGHT))
+        screen.blit(win_img, (0, 0))
+        pygame.display.flip()
+
+    if os.path.exists(win_audio_path):
+        pygame.mixer.music.load(win_audio_path)
+        pygame.mixer.music.play()
+        while pygame.mixer.music.get_busy():
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+            pygame.time.delay(100)
+    else:
+        pygame.time.delay(2000)
+
+
+def play_lose_sequence(secret_word, state):
+    """Play the loss sequence with video and audio losehard.mp3 starting at 12s."""
+    pygame.mixer.music.stop()
+    
+    video_path = constants.VIDEO_LOSE_HARD
+    audio_path = os.path.join("assets", "sounds", "losehard.mp3")
+    
+    cap = cv2.VideoCapture(video_path)
+    
+    if not cap.isOpened():
+        print(f"ERREUR : Fichier vidéo introuvable : {video_path}")
+        return "restart"
+
     fps = cap.get(cv2.CAP_PROP_FPS) or 30
-    cap.set(cv2.CAP_PROP_POS_MSEC, 30000)
+    cap.set(cv2.CAP_PROP_POS_MSEC, 12000)
 
-    if os.path.exists(constants.AUDIO_LOSE_HARD):
+    if os.path.exists(audio_path):
+        pygame.mixer.music.load(audio_path)
+        pygame.mixer.music.play(start=12.0)
+    elif os.path.exists(constants.AUDIO_LOSE_HARD):
         pygame.mixer.music.load(constants.AUDIO_LOSE_HARD)
-        pygame.mixer.music.play(start=30.0)
+        pygame.mixer.music.play(start=12.0)
 
     clock = pygame.time.Clock()
     last_frame_surf = None
-
+    
+    fade = pygame.Surface((constants.WIDTH, constants.HEIGHT))
+    fade.fill((0, 0, 0))
+    
+    alpha = 255
     while cap.isOpened():
-        if cap.get(cv2.CAP_PROP_POS_MSEC) >= 44000:
+        current_msec = cap.get(cv2.CAP_PROP_POS_MSEC)
+        if current_msec >= 43000:
             break
+            
         ret, frame = cap.read()
         if not ret:
             break
+            
         frame = cv2.resize(frame, (constants.WIDTH, constants.HEIGHT))
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         frame = frame.swapaxes(0, 1)
         last_frame_surf = pygame.surfarray.make_surface(frame)
+        
         screen.blit(last_frame_surf, (0, 0))
+        
+        if alpha > 0:
+            fade.set_alpha(alpha)
+            screen.blit(fade, (0, 0))
+            alpha -= 5 
+            
         pygame.display.flip()
         clock.tick(fps)
         pygame.event.pump()
@@ -127,7 +194,6 @@ def play_lose_sequence(secret_word, state):
 
     while True:
         m_pos = pygame.mouse.get_pos()
-
         if last_frame_surf:
             screen.blit(last_frame_surf, (0, 0))
 
@@ -161,7 +227,8 @@ def play_lose_sequence(secret_word, state):
                     pygame_utils.play_click_sound()
                     return "restart"
                 if rect_back.collidepoint(event.pos):
-                    pygame_utils.return_to_menu()
+                    pygame_utils.play_click_sound()
+                    return_to_main_menu()
 
 
 def draw_interface(state, secret, timer, mouse_pos):
@@ -222,6 +289,10 @@ def main():
     rect_reset = pygame.Rect(constants.WIDTH // 2 - 90, constants.HEIGHT // 2 + 20, w_b, h_b)
     rect_quit = pygame.Rect(constants.WIDTH // 2 + 100, constants.HEIGHT // 2 + 20, w_b, h_b)
 
+    # Boutons Victoire
+    rect_retry_win = pygame.Rect(constants.WIDTH // 2 - 210, constants.HEIGHT - 120, 200, 50)
+    rect_quit_win = pygame.Rect(constants.WIDTH // 2 + 10, constants.HEIGHT - 120, 200, 50)
+
     while True:
         dt = clock.tick(60) / 1000.0
         mouse_pos = pygame.mouse.get_pos()
@@ -244,7 +315,8 @@ def main():
                         game_state, secret_word, timer = initialize_game()
                         paused = False
                     if rect_quit.collidepoint(event.pos):
-                        pygame_utils.return_to_menu()
+                        pygame_utils.play_click_sound()
+                        return_to_main_menu()
 
             if not paused and event.type == pygame.KEYDOWN and game_state["status"] == "in_progress":
                 letter = event.unicode.lower()
@@ -258,7 +330,9 @@ def main():
 
                     if game_state["errors"] >= 5:
                         game_state["status"] = "loss"
-                        if play_lose_sequence(secret_word, game_state) == "restart":
+                        # Correction: Appel de la sequence et reset immediat
+                        res = play_lose_sequence(secret_word, game_state)
+                        if res == "restart":
                             game_state, secret_word, timer = initialize_game()
                             continue
 
@@ -266,45 +340,71 @@ def main():
             timer -= dt
             if timer <= 0:
                 game_state["status"] = "loss"
-                if play_lose_sequence(secret_word, game_state) == "restart":
+                res = play_lose_sequence(secret_word, game_state)
+                if res == "restart":
                     game_state, secret_word, timer = initialize_game()
+                    continue
 
         if game_state["status"] == "won":
-            screen.fill((20, 40, 20))
-            win_text = language_manager.get_text("hard_win")
-            hint_text = language_manager.get_text("hard_hint")
-            msg = fonts["info"].render(f"{win_text} : {secret_word}", True, constants.GREEN)
-            msg2 = fonts["button"].render(hint_text, True, constants.WHITE)
-            screen.blit(msg, msg.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 - 20)))
-            screen.blit(msg2, msg2.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 + 40)))
-            pygame.display.flip()
+            play_win_sequence()
+            while game_state["status"] == "won":
+                m_pos = pygame.mouse.get_pos()
+                screen.blit(img_bg, (0, 0))
+                overlay = pygame.Surface((constants.WIDTH, constants.HEIGHT), pygame.SRCALPHA)
+                overlay.fill(constants.BLACK_OVERLAY)
+                screen.blit(overlay, (0, 0))
 
-            for event in pygame.event.get():
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                    pygame_utils.play_click_sound()
-                    game_state, secret_word, timer = initialize_game()
+                win_text = language_manager.get_text("hard_win")
+                msg = fonts["word"].render(win_text, True, constants.GREEN)
+                msg2 = fonts["info"].render(f"{secret_word}", True, constants.WHITE)
+                screen.blit(msg, msg.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 - 60)))
+                screen.blit(msg2, msg2.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 + 20)))
+
+                retry_t = language_manager.get_text("hard_retry")
+                quit_t = language_manager.get_text("hard_quit")
+
+                for r, label in [(rect_retry_win, retry_t), (rect_quit_win, quit_t)]:
+                    pygame_utils.draw_button_with_border(
+                        screen, r, constants.DARK_BLUE, constants.DARK_BLUE_HOVER,
+                        m_pos, label, fonts["button"]
+                    )
+
+                pygame.display.flip()
+
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        sys.exit()
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        if rect_retry_win.collidepoint(event.pos):
+                            pygame_utils.play_click_sound()
+                            game_state, secret_word, timer = initialize_game()
+                        if rect_quit_win.collidepoint(event.pos):
+                            pygame_utils.play_click_sound()
+                            return_to_main_menu()
             continue
 
-        draw_interface(game_state, secret_word, timer, mouse_pos)
+        if game_state["status"] == "in_progress":
+            draw_interface(game_state, secret_word, timer, mouse_pos)
 
-        if paused:
-            overlay = pygame.Surface((constants.WIDTH, constants.HEIGHT), pygame.SRCALPHA)
-            overlay.fill(constants.BLACK_OVERLAY)
-            screen.blit(overlay, (0, 0))
+            if paused:
+                overlay = pygame.Surface((constants.WIDTH, constants.HEIGHT), pygame.SRCALPHA)
+                overlay.fill(constants.BLACK_OVERLAY)
+                screen.blit(overlay, (0, 0))
 
-            pause_title = language_manager.get_text("hard_pause")
-            txt_pause = fonts["word"].render(pause_title, True, constants.GOLD)
-            screen.blit(txt_pause, txt_pause.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 - 60)))
+                pause_title = language_manager.get_text("hard_pause")
+                txt_pause = fonts["word"].render(pause_title, True, constants.GOLD)
+                screen.blit(txt_pause, txt_pause.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 - 60)))
 
-            cont_text = language_manager.get_text("hard_continue")
-            reset_text = language_manager.get_text("hard_reset")
-            quit_text = language_manager.get_text("hard_quit")
+                cont_text = language_manager.get_text("hard_continue")
+                reset_text = language_manager.get_text("hard_reset")
+                quit_text = language_manager.get_text("hard_quit")
 
-            for r, label in [(rect_cont, cont_text), (rect_reset, reset_text), (rect_quit, quit_text)]:
-                pygame_utils.draw_button_with_border(
-                    screen, r, constants.DARK_BLUE, constants.DARK_BLUE_HOVER,
-                    mouse_pos, label, fonts["button"]
-                )
+                for r, label in [(rect_cont, cont_text), (rect_reset, reset_text), (rect_quit, quit_text)]:
+                    pygame_utils.draw_button_with_border(
+                        screen, r, constants.DARK_BLUE, constants.DARK_BLUE_HOVER,
+                        mouse_pos, label, fonts["button"]
+                    )
 
         pygame.display.flip()
 

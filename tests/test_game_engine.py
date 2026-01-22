@@ -2,48 +2,34 @@
 
 """
 Unit tests for the game_engine module.
-Tests are written in a procedural style without classes.
+Run with: python -m tests.test_game_engine
 """
 
-import sys
-import os
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 from models import game_engine
-from tests.test_logger import log_test_error
 
 
 def assert_equal(actual, expected, test_name):
-    """Helper function to assert equality and log errors."""
+    """Helper function to assert equality."""
     if actual != expected:
-        error_msg = f"Expected {expected}, got {actual}"
-        log_test_error(test_name, error_msg)
-        raise AssertionError(error_msg)
+        raise AssertionError(f"Expected {expected}, got {actual}")
 
 
 def assert_true(value, test_name):
-    """Helper function to assert true and log errors."""
+    """Helper function to assert true."""
     if not value:
-        error_msg = f"Expected True, got {value}"
-        log_test_error(test_name, error_msg)
-        raise AssertionError(error_msg)
+        raise AssertionError(f"Expected True, got {value}")
 
 
 def assert_false(value, test_name):
-    """Helper function to assert false and log errors."""
+    """Helper function to assert false."""
     if value:
-        error_msg = f"Expected False, got {value}"
-        log_test_error(test_name, error_msg)
-        raise AssertionError(error_msg)
+        raise AssertionError(f"Expected False, got {value}")
 
 
 def assert_in(item, container, test_name):
-    """Helper function to assert item is in container and log errors."""
+    """Helper function to assert item is in container."""
     if item not in container:
-        error_msg = f"Expected {item} to be in {container}"
-        log_test_error(test_name, error_msg)
-        raise AssertionError(error_msg)
+        raise AssertionError(f"Expected {item} to be in {container}")
 
 
 def test_create_game_basic():
@@ -308,5 +294,4 @@ def run_all_tests():
 
 
 if __name__ == '__main__':
-    success = run_all_tests()
-    sys.exit(0 if success else 1)
+    run_all_tests()

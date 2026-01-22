@@ -1,22 +1,9 @@
-# controllers/game_controller.py
-
-"""
-This file orchestrates the game flow by connecting the game logic (model)
-with the user interface (view).
-
-It implements the procedural equivalent of the "🎮 [CONTROLLER] Développement du Contrôleur"
-Trello card.
-"""
-
-# Import the functions from the model, view, and utility modules
 from models import game_engine
 from UI import console_view
 from utils import word_manager, language_manager
 
+# Initialize and run the main game loop
 def start_game():
-    """
-    Initializes and runs the main game loop.
-    """
     # Show the main menu and get user's choices
     game_settings = console_view.display_main_menu()
 

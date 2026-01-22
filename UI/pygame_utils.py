@@ -1,10 +1,3 @@
-# UI/pygame_utils.py
-
-"""
-Shared Pygame utilities for the Hangman game.
-Contains font creation, image loading, and common UI functions.
-"""
-
 import pygame
 import sys
 import os
@@ -12,16 +5,11 @@ import subprocess
 
 from UI import constants
 
-
-# Global sound object (initialized by load_sounds)
 _sound_click = None
 
 
+# Create and return dictionary of commonly used fonts
 def create_fonts():
-    """
-    Create and return a dictionary of commonly used fonts.
-    Call this after pygame.init().
-    """
     return {
         "word": pygame.font.SysFont("Arial", 60, bold=True),
         "info": pygame.font.SysFont("Arial", 30, bold=True),
@@ -31,11 +19,8 @@ def create_fonts():
     }
 
 
+# Load and scale hangman body part images
 def load_hangman_images(size=None):
-    """
-    Load and scale hangman body part images.
-    Returns a dictionary mapping error count (1-5) to image surfaces.
-    """
     if size is None:
         size = constants.HANGMAN_SPRITE_SIZE
 
@@ -58,10 +43,8 @@ def load_hangman_images(size=None):
     return images
 
 
+# Load sound effects
 def load_sounds():
-    """
-    Load sound effects. Call this after pygame.mixer.init().
-    """
     global _sound_click
 
     try:
@@ -72,16 +55,14 @@ def load_sounds():
         _sound_click = None
 
 
+# Play the click sound effect
 def play_click_sound():
-    """Play the click sound effect if available."""
     if _sound_click:
         _sound_click.play()
 
 
+# Stop audio, quit pygame, and launch main menu
 def return_to_menu():
-    """
-    Stop all audio, quit pygame, and launch the main menu.
-    """
     play_click_sound()
     pygame.mixer.music.stop()
     pygame.mixer.stop()
@@ -92,18 +73,8 @@ def return_to_menu():
     sys.exit()
 
 
+# Draw a rounded button with centered text
 def draw_rounded_button(surface, color, rect, text, font, text_color=None):
-    """
-    Draw a rounded button with centered text.
-
-    Args:
-        surface: Pygame surface to draw on
-        color: Button fill color
-        rect: pygame.Rect defining button position and size
-        text: Text to display on button
-        font: Pygame font for text
-        text_color: Color for text (defaults to WHITE)
-    """
     if text_color is None:
         text_color = constants.WHITE
 
@@ -113,19 +84,8 @@ def draw_rounded_button(surface, color, rect, text, font, text_color=None):
     surface.blit(text_surf, text_rect)
 
 
+# Draw a button with border and hover effect
 def draw_button_with_border(surface, rect, color, hover_color, mouse_pos, label, font):
-    """
-    Draw a button with border and hover effect.
-
-    Args:
-        surface: Pygame surface to draw on
-        rect: pygame.Rect defining button position and size
-        color: Normal button color
-        hover_color: Color when mouse hovers
-        mouse_pos: Current mouse position tuple
-        label: Text to display
-        font: Pygame font for text
-    """
     is_hover = rect.collidepoint(mouse_pos)
 
     if is_hover:

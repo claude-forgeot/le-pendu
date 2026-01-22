@@ -1,5 +1,3 @@
-# UI/hard_mode_view.py
-
 """
 Hard mode view for the Hangman game.
 Features: 30s timer, 5 max errors, video on loss.
@@ -11,6 +9,7 @@ import sys
 import os
 import cv2
 import random
+import subprocess
 
 # Add project root to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -77,44 +76,75 @@ def initialize_game():
     return game_state, secret_word, timer
 
 
-def play_lose_sequence(secret_word, state):
-    """Play the loss sequence with video."""
-    draw_interface(state, secret_word, 0, pygame.mouse.get_pos())
-    pygame.display.flip()
-    pygame.time.delay(600)
+def return_to_main_menu():
+    """Relance le menu principal de manière indépendante et ferme ce script."""
     pygame.mixer.music.stop()
+    pygame.mixer.stop()
+    pygame.quit()
+    
+    # On cherche le chemin de main.py (à la racine)
+    main_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "main.py")
+    
+    if os.path.exists(main_path):
+        subprocess.Popen([sys.executable, main_path])
+    else:
+        # Si on est déjà à la racine
+        subprocess.Popen([sys.executable, "main.py"])
+        
+    sys.exit()
 
-    fade = pygame.Surface((constants.WIDTH, constants.HEIGHT))
-    fade.fill((0, 0, 0))
-    for alpha in range(0, 255, 15):
-        fade.set_alpha(alpha)
-        screen.blit(fade, (0, 0))
-        pygame.display.flip()
-        pygame.time.delay(10)
-        pygame.event.pump()
 
-    cap = cv2.VideoCapture(constants.VIDEO_LOSE_HARD)
+def play_lose_sequence(secret_word, state):
+    """Play the loss sequence with video and audio losehard.mp3 starting at 12s."""
+    pygame.mixer.music.stop()
+    
+    video_path = constants.VIDEO_LOSE_HARD
+    audio_path = os.path.join("assets", "sounds", "losehard.mp3")
+    
+    cap = cv2.VideoCapture(video_path)
+    
+    if not cap.isOpened():
+        print(f"ERREUR : Fichier vidéo introuvable : {video_path}")
+        return
+
     fps = cap.get(cv2.CAP_PROP_FPS) or 30
-    cap.set(cv2.CAP_PROP_POS_MSEC, 30000)
+    cap.set(cv2.CAP_PROP_POS_MSEC, 12000)
 
-    if os.path.exists(constants.AUDIO_LOSE_HARD):
+    if os.path.exists(audio_path):
+        pygame.mixer.music.load(audio_path)
+        pygame.mixer.music.play(start=12.0)
+    elif os.path.exists(constants.AUDIO_LOSE_HARD):
         pygame.mixer.music.load(constants.AUDIO_LOSE_HARD)
-        pygame.mixer.music.play(start=30.0)
+        pygame.mixer.music.play(start=12.0)
 
     clock = pygame.time.Clock()
     last_frame_surf = None
-
+    
+    fade = pygame.Surface((constants.WIDTH, constants.HEIGHT))
+    fade.fill((0, 0, 0))
+    
+    alpha = 255
     while cap.isOpened():
-        if cap.get(cv2.CAP_PROP_POS_MSEC) >= 44000:
+        current_msec = cap.get(cv2.CAP_PROP_POS_MSEC)
+        if current_msec >= 43000:
             break
+            
         ret, frame = cap.read()
         if not ret:
             break
+            
         frame = cv2.resize(frame, (constants.WIDTH, constants.HEIGHT))
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         frame = frame.swapaxes(0, 1)
         last_frame_surf = pygame.surfarray.make_surface(frame)
+        
         screen.blit(last_frame_surf, (0, 0))
+        
+        if alpha > 0:
+            fade.set_alpha(alpha)
+            screen.blit(fade, (0, 0))
+            alpha -= 5 
+            
         pygame.display.flip()
         clock.tick(fps)
         pygame.event.pump()
@@ -127,7 +157,6 @@ def play_lose_sequence(secret_word, state):
 
     while True:
         m_pos = pygame.mouse.get_pos()
-
         if last_frame_surf:
             screen.blit(last_frame_surf, (0, 0))
 
@@ -161,7 +190,8 @@ def play_lose_sequence(secret_word, state):
                     pygame_utils.play_click_sound()
                     return "restart"
                 if rect_back.collidepoint(event.pos):
-                    pygame_utils.return_to_menu()
+                    pygame_utils.play_click_sound()
+                    return_to_main_menu()
 
 
 def draw_interface(state, secret, timer, mouse_pos):
@@ -244,7 +274,8 @@ def main():
                         game_state, secret_word, timer = initialize_game()
                         paused = False
                     if rect_quit.collidepoint(event.pos):
-                        pygame_utils.return_to_menu()
+                        pygame_utils.play_click_sound()
+                        return_to_main_menu()
 
             if not paused and event.type == pygame.KEYDOWN and game_state["status"] == "in_progress":
                 letter = event.unicode.lower()
@@ -268,6 +299,7 @@ def main():
                 game_state["status"] = "loss"
                 if play_lose_sequence(secret_word, game_state) == "restart":
                     game_state, secret_word, timer = initialize_game()
+                    continue
 
         if game_state["status"] == "won":
             screen.fill((20, 40, 20))

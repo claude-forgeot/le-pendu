@@ -1,6 +1,6 @@
 """
 Mode Infinite - Hangman
-Features: 5 max errors, multiple small daemon.png display, infinite.png background, 
+Features: 5 max errors, multiple small daemon.png display, infinite.png background,
 infinite.mp3 music, lose_infinite.mp3 on loss, multi-difficulty words.
 No hints, no win screen (auto-restart on word found).
 """
@@ -52,8 +52,8 @@ def initialize_pygame():
             img_bg = pygame.Surface((constants.WIDTH, constants.HEIGHT))
             img_bg.fill((20, 20, 20))
         img_bg = pygame.transform.scale(img_bg, (constants.WIDTH, constants.HEIGHT))
-        
-        # Daemon image - Taille réduite à 150x150
+
+        # Daemon image
         daemon_path = os.path.join("assets", "images", "daemon.png")
         if os.path.exists(daemon_path):
             img_daemon = pygame.image.load(daemon_path).convert_alpha()
@@ -67,7 +67,7 @@ def initialize_game():
     pygame.mixer.music.stop()
     pygame.mixer.stop()
 
-    # Musique infinite.mp3
+    # Music infinite.mp3
     music_path = os.path.join("assets", "audios", "infinite.mp3")
     if os.path.exists(music_path):
         try:
@@ -77,18 +77,18 @@ def initialize_game():
             pass
 
     current_lang = language_manager.get_current_language()
-    
-    # Sélection aléatoire parmi les trois listes
+
+    # Random selection from all difficulties
     difficulties = ["facile", "moyen", "difficile"]
     chosen_diff = random.choice(difficulties)
     secret_word = word_manager.get_word(current_lang, chosen_diff)
-    
+
     if not secret_word:
         secret_word = "INFINITE"
 
-    # 5 erreurs max
+    # 5 max errors
     game_state = game_engine.create_game(secret_word, 5)
-    
+
     return game_state, secret_word
 
 def return_to_main_menu():
@@ -100,9 +100,9 @@ def return_to_main_menu():
     sys.exit()
 
 def play_lose_sequence(secret_word):
-    """Loss: Overlay noir transparent + lose_infinite.mp3."""
+    """Loss: Black transparent overlay + lose_infinite.mp3."""
     pygame.mixer.music.stop()
-    
+
     loss_audio = os.path.join("assets", "audios", "lose_infinite.mp3")
     if os.path.exists(loss_audio):
         pygame.mixer.music.load(loss_audio)
@@ -111,7 +111,7 @@ def play_lose_sequence(secret_word):
     fade = pygame.Surface((constants.WIDTH, constants.HEIGHT))
     fade.fill((0, 0, 0))
     fade.set_alpha(200)
-    
+
     rect_retry = pygame.Rect(constants.WIDTH // 2 - 210, constants.HEIGHT - 120, 200, 50)
     rect_back = pygame.Rect(constants.WIDTH // 2 + 10, constants.HEIGHT - 120, 200, 50)
 
@@ -121,8 +121,8 @@ def play_lose_sequence(secret_word):
         screen.blit(fade, (0, 0))
 
         t1 = fonts["word"].render("GAME OVER", True, constants.RED)
-        t2 = fonts["info"].render(f"Le mot était : {secret_word}", True, constants.WHITE)
-        tip = fonts["small"].render("L'infini vous a consumé...", True, constants.GOLD)
+        t2 = fonts["info"].render(f"Le mot etait : {secret_word}", True, constants.WHITE)
+        tip = fonts["small"].render("L'infini vous a consume...", True, constants.GOLD)
 
         screen.blit(t1, t1.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 - 80)))
         screen.blit(t2, t2.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 - 20)))
@@ -133,10 +133,14 @@ def play_lose_sequence(secret_word):
 
         pygame.display.flip()
         for event in pygame.event.get():
-            if event.type == pygame.QUIT: pygame.quit(); sys.exit()
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if rect_retry.collidepoint(event.pos): return "restart"
-                if rect_back.collidepoint(event.pos): return_to_main_menu()
+                if rect_retry.collidepoint(event.pos):
+                    return "restart"
+                if rect_back.collidepoint(event.pos):
+                    return_to_main_menu()
 
 def draw_interface(state, secret, mouse_pos):
     """Draw game UI."""
@@ -145,9 +149,9 @@ def draw_interface(state, secret, mouse_pos):
     # Pause Button
     pygame_utils.draw_button_with_border(screen, btn_pause_rect, constants.DARK_BLUE, constants.DARK_BLUE_HOVER, mouse_pos, "PAUSE", fonts["button"])
 
-    # Affichage des Daemons : une copie apparaît par erreur de gauche à droite
+    # Display daemons: one appears per error from left to right
     if img_daemon:
-        spacing = 160 # Espace entre chaque daemon
+        spacing = 160
         start_x = (constants.WIDTH - (state["errors"] * spacing)) // 2
         for i in range(state["errors"]):
             screen.blit(img_daemon, (start_x + (i * spacing), 150))
@@ -157,9 +161,9 @@ def draw_interface(state, secret, mouse_pos):
     surf_mot = fonts["word"].render(" ".join(masked), True, constants.WHITE)
     screen.blit(surf_mot, (constants.WIDTH // 2 - surf_mot.get_width() // 2, constants.HEIGHT - 200))
 
-    # Affichage des lettres utilisées
+    # Display used letters
     used_letters = ", ".join(state["letters_played"]).upper()
-    txt_used = fonts["small"].render(f"Utilisées: {used_letters}", True, constants.WHITE)
+    txt_used = fonts["small"].render(f"Utilisees: {used_letters}", True, constants.WHITE)
     screen.blit(txt_used, (20, constants.HEIGHT - 40))
 
 def main():
@@ -180,7 +184,8 @@ def main():
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit(); sys.exit()
+                pygame.quit()
+                sys.exit()
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if btn_pause_rect.collidepoint(event.pos):
@@ -205,9 +210,10 @@ def main():
 
         # Check Win/Loss
         if game_state["status"] == "won":
+            # Auto-restart in Infinite mode
             game_state, secret_word = initialize_game()
-            
-        elif game_state["status"] == "loss" or game_state["errors"] >= 5:
+
+        elif game_state["status"] == "lost" or game_state["errors"] >= 5:
             if play_lose_sequence(secret_word) == "restart":
                 game_state, secret_word = initialize_game()
 
@@ -215,6 +221,7 @@ def main():
         if not paused:
             draw_interface(game_state, secret_word, mouse_pos)
         else:
+            # Pause menu
             overlay = pygame.Surface((constants.WIDTH, constants.HEIGHT), pygame.SRCALPHA)
             overlay.fill((0, 0, 0, 150))
             screen.blit(overlay, (0, 0))

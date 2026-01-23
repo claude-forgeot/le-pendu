@@ -266,7 +266,11 @@ def draw_interface(state, secret, timer, mouse_pos):
     surf_mot = fonts["word"].render(" ".join(masked), True, constants.WHITE)
     screen.blit(surf_mot, (constants.WIDTH // 2 - surf_mot.get_width() // 2, constants.HEIGHT - 180))
 
-    wrong_letters = [l for l in state["letters_played"] if l not in secret.lower()]
+    wrong_letters = []
+    for l in state["letters_played"]:
+        if l not in secret.lower():
+            wrong_letters.append(l)
+
     errors_text = language_manager.get_text("hard_errors")
     screen.blit(fonts["small"].render(errors_text, True, constants.RED), (20, constants.HEIGHT - 70))
     screen.blit(fonts["small"].render(", ".join(wrong_letters).upper(), True, constants.WHITE), (20, constants.HEIGHT - 40))

@@ -108,7 +108,15 @@ def add_word_to_txt(file_path: str, word: str, difficulty: str) -> bool:
             words_data[difficulty_key] = []
 
         word_lower = word.lower()
-        if word_lower in [w.lower() for w in words_data[difficulty_key]]:
+
+        # Check if word already exists
+        word_exists = False
+        for w in words_data[difficulty_key]:
+            if w.lower() == word_lower:
+                word_exists = True
+                break
+
+        if word_exists:
             print(f"Word '{word}' already exists in {difficulty} difficulty")
             return False
 
@@ -141,7 +149,15 @@ def add_word_to_json(file_path: str, word: str, difficulty: str) -> bool:
             words_data[difficulty_key] = []
 
         word_lower = word.lower()
-        if word_lower in [w.lower() for w in words_data[difficulty_key]]:
+
+        # Check if word already exists
+        word_exists = False
+        for w in words_data[difficulty_key]:
+            if w.lower() == word_lower:
+                word_exists = True
+                break
+
+        if word_exists:
             print(f"Word '{word}' already exists in {difficulty} difficulty")
             return False
 

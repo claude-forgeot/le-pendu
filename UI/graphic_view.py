@@ -143,19 +143,13 @@ def main_gui():
             f = pygame.font.SysFont("Arial", font_size, bold=True)
             pygame_utils.draw_rounded_button(screen, c, draw_rect, language_manager.get_text(key), f)
 
-        # Versus et Scores
-        if win_w < 600:
-            rect_versus = pygame.Rect(win_w - btn_w_base - 40, win_h - (btn_h_base * 2) - 60, btn_w_base, btn_h_base)
-            rect_scores = pygame.Rect(win_w - btn_w_base - 40, win_h - btn_h_base - 40, btn_w_base, btn_h_base)
-        else:
-            rect_versus = pygame.Rect(win_w // 2 - btn_w_base // 2, win_h - btn_h_base - 40, btn_w_base, btn_h_base)
-            rect_scores = pygame.Rect(win_w - btn_w_base - 40, win_h - btn_h_base - 40, btn_w_base, btn_h_base)
+        # Scores uniquement (Versus supprimé)
+        rect_scores = pygame.Rect(win_w - btn_w_base - 40, win_h - btn_h_base - 40, btn_w_base, btn_h_base)
 
-        for r, key, c, hc in [(rect_versus, "button_versus", constants.PURPLE, constants.PURPLE_HOVER), (rect_scores, "button_scores", constants.GOLD, constants.GOLD_HOVER)]:
-            is_h = r.collidepoint(mouse_pos)
-            d_r = r.inflate(20, 10) if is_h else r
-            f_s = int(btn_h_base * 0.52) if is_h else int(btn_h_base * 0.45)
-            pygame_utils.draw_rounded_button(screen, hc if is_h else c, d_r, language_manager.get_text(key), pygame.font.SysFont("Arial", f_s, bold=True))
+        is_h_scores = rect_scores.collidepoint(mouse_pos)
+        d_r_scores = rect_scores.inflate(20, 10) if is_h_scores else rect_scores
+        f_s_scores = int(btn_h_base * 0.52) if is_h_scores else int(btn_h_base * 0.45)
+        pygame_utils.draw_rounded_button(screen, constants.GOLD_HOVER if is_h_scores else constants.GOLD, d_r_scores, language_manager.get_text("button_scores"), pygame.font.SysFont("Arial", f_s_scores, bold=True))
 
         # Pop-up des règles
         if show_rules:
@@ -182,7 +176,6 @@ def main_gui():
                 "Cliquez pour fermer" if current_lang == "fr" else "Click to close"
             ]
             for i, text in enumerate(rules_text):
-                # Style différent pour le titre et l'intro
                 if i == 0:
                     color, size_factor, is_bold = (211, 47, 47), 0.08, True
                 elif i == 2:
@@ -213,7 +206,14 @@ def main_gui():
                     language_manager.set_language("en")
 
                 # Lancement des scripts de jeu
-                for r, m_path in [(rect_facile, "easy_mode_view.py"), (rect_normal, "normal_mode_view.py"), (rect_difficile, "hard_mode_view.py")]:
+                game_launchers = [
+                    (rect_facile, "easy_mode_view.py"),
+                    (rect_normal, "normal_mode_view.py"),
+                    (rect_difficile, "hard_mode_view.py"),
+                    (rect_infini, "infinite_mode_view.py")
+                ]
+                
+                for r, m_path in game_launchers:
                     if r.collidepoint(event.pos):
                         pygame_utils.play_click_sound()
                         pygame.mixer.music.stop()

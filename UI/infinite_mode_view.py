@@ -168,6 +168,12 @@ def main():
     clock = pygame.time.Clock()
     paused = False
 
+    # Definitions des boutons de pause
+    w_b, h_b = 180, 50
+    rect_cont = pygame.Rect(constants.WIDTH // 2 - 280, constants.HEIGHT // 2 + 20, w_b, h_b)
+    rect_reset = pygame.Rect(constants.WIDTH // 2 - 90, constants.HEIGHT // 2 + 20, w_b, h_b)
+    rect_quit = pygame.Rect(constants.WIDTH // 2 + 100, constants.HEIGHT // 2 + 20, w_b, h_b)
+
     while True:
         clock.tick(60)
         mouse_pos = pygame.mouse.get_pos()
@@ -180,6 +186,18 @@ def main():
                 if btn_pause_rect.collidepoint(event.pos):
                     pygame_utils.play_click_sound()
                     paused = not paused
+                
+                elif paused:
+                    if rect_cont.collidepoint(event.pos):
+                        pygame_utils.play_click_sound()
+                        paused = False
+                    if rect_reset.collidepoint(event.pos):
+                        pygame_utils.play_click_sound()
+                        game_state, secret_word = initialize_game()
+                        paused = False
+                    if rect_quit.collidepoint(event.pos):
+                        pygame_utils.play_click_sound()
+                        return_to_main_menu()
 
             if not paused and event.type == pygame.KEYDOWN and game_state["status"] == "in_progress":
                 letter = event.unicode.lower()
@@ -188,6 +206,7 @@ def main():
 
         # Check Win/Loss
         if game_state["status"] == "won":
+            # Auto-restart immédiat en mode Infinite
             game_state, secret_word = initialize_game()
             
         elif game_state["status"] == "loss" or game_state["errors"] >= 5:
@@ -198,11 +217,20 @@ def main():
         if not paused:
             draw_interface(game_state, secret_word, mouse_pos)
         else:
+            # Menu de Pause complet
             overlay = pygame.Surface((constants.WIDTH, constants.HEIGHT), pygame.SRCALPHA)
             overlay.fill((0, 0, 0, 150))
             screen.blit(overlay, (0, 0))
-            txt = fonts["word"].render("PAUSE", True, constants.GOLD)
-            screen.blit(txt, txt.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2)))
+            
+            txt_pause = fonts["word"].render("PAUSE", True, constants.GOLD)
+            screen.blit(txt_pause, txt_pause.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 - 60)))
+
+            # Dessin des 3 boutons
+            for r, label in [(rect_cont, "CONTINUER"), (rect_reset, "RECOMMENCER"), (rect_quit, "QUITTER")]:
+                pygame_utils.draw_button_with_border(
+                    screen, r, constants.DARK_BLUE, constants.DARK_BLUE_HOVER,
+                    mouse_pos, label, fonts["button"]
+                )
 
         pygame.display.flip()
 

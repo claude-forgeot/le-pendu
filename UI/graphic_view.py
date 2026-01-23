@@ -124,14 +124,15 @@ def main_gui():
         rect_difficile = pygame.Rect(target_x, start_y + spacing * 2, btn_w_base, btn_h_base)
         rect_infini = pygame.Rect(target_x, start_y + spacing * 3, btn_w_base, btn_h_base)
 
+        # Chemins vers les scripts spécifiques
         buttons_config = [
-            (rect_facile, "button_facile", constants.GREEN, constants.GREEN_HOVER),
-            (rect_normal, "button_normal", constants.ORANGE, constants.ORANGE_HOVER),
-            (rect_difficile, "button_difficile", constants.RED, constants.RED_HOVER),
-            (rect_infini, "button_infini", constants.DARK_BLUE, constants.DARK_BLUE_HOVER)
+            (rect_facile, "easy_mode_view.py", "button_facile", constants.GREEN, constants.GREEN_HOVER),
+            (rect_normal, "normal_mode_view.py", "button_normal", constants.ORANGE, constants.ORANGE_HOVER),
+            (rect_difficile, "hard_mode_view.py", "button_difficile", constants.RED, constants.RED_HOVER),
+            (rect_infini, "infinite_mode_view.py", "button_infini", constants.DARK_BLUE, constants.DARK_BLUE_HOVER)
         ]
 
-        for r, key, color, hover_c in buttons_config:
+        for r, _, key, color, hover_c in buttons_config:
             is_hover = r.collidepoint(mouse_pos)
             draw_rect = r.inflate(24, 12) if is_hover else r
             font_size = int(btn_h_base * (0.52 if is_hover else 0.45))
@@ -139,7 +140,6 @@ def main_gui():
             pygame_utils.draw_rounded_button(screen, hover_c if is_hover else color, draw_rect, language_manager.get_text(key), f)
 
         # --- BOUTONS SCORE ET AJOUTER ---
-        # On calcule les positions pour qu'ils soient côte à côte en bas à droite
         rect_scores = pygame.Rect(win_w - btn_w_base - 40, win_h - btn_h_base - 40, btn_w_base, btn_h_base)
         rect_add_word = pygame.Rect(win_w - (btn_w_base * 2) - 60, win_h - btn_h_base - 40, btn_w_base, btn_h_base)
 
@@ -150,7 +150,7 @@ def main_gui():
         score_btn_text = language_manager.get_text("button_scores") if not show_scores else ("RETOUR" if current_lang=="fr" else "BACK")
         pygame_utils.draw_rounded_button(screen, constants.GOLD_HOVER if is_h_scores else constants.GOLD, d_r_scores, score_btn_text, pygame.font.SysFont("Arial", f_s_scores, bold=True))
 
-        # Bouton Ajouter Mot (Masqué si show_scores est True pour laisser de la place au classement)
+        # Bouton Ajouter Mot
         if not show_scores:
             is_h_add = rect_add_word.collidepoint(mouse_pos)
             d_r_add = rect_add_word.inflate(20, 10) if is_h_add else rect_add_word
@@ -241,13 +241,14 @@ def main_gui():
                     subprocess.Popen([sys.executable, os.path.join(constants.BASE_DIR, "UI", "addword_mode_view.py")])
                     sys.exit()
 
+                # --- CLIC MODES DE JEU ---
                 if not show_scores:
-                    for r, m_path, _, _ in buttons_config:
+                    for r, script_name, _, _, _ in buttons_config:
                         if r.collidepoint(event.pos):
                             pygame_utils.play_click_sound()
                             pygame.mixer.music.stop()
                             pygame.quit()
-                            subprocess.Popen([sys.executable, os.path.join(constants.BASE_DIR, "UI", m_path)])
+                            subprocess.Popen([sys.executable, os.path.join(constants.BASE_DIR, "UI", script_name)])
                             sys.exit()
 
         pygame.display.flip()

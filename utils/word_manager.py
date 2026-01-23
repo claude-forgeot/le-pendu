@@ -1,73 +1,152 @@
 # utils/word_manager.py
 
 """
-This file is responsible for loading words from data files and providing
-a random word based on language and difficulty.
-
-It adapts the Trello card: "📚 [DATA] Gestionnaire de Mots" for a procedural style.
+Word Manager for the Hangman game.
+Manages word storage in TXT format.
 """
 
-import json
 import random
 import os
-from typing import Dict, List
 
-# The path to the directory where the word files are stored.
 DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data')
 
-def load_words(language: str) -> Dict[str, List[str]]:
-    """
-    Loads a word file based on the selected language.
 
-    Args:
-        language (str): The language code (e.g., 'fr', 'en').
-
-    Returns:
-        Dict[str, List[str]]: A dictionary containing words categorized by difficulty.
-                               Returns an empty dictionary if the file is not found.
+def load_words_from_txt(file_path):
     """
-    file_path = os.path.join(DATA_DIR, f'words_{language}.json')
+    Load words from a TXT file with section format.
+    Format:
+        [difficulty_level]
+        word1
+        word2
+        ...
+    """
+    words_data = {}
+    current_difficulty = None
+
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
+            for line in f:
+                line = line.strip()
+
+                if not line:
+                    continue
+
+                if line.startswith('[') and line.endswith(']'):
+                    current_difficulty = line[1:-1]
+                    words_data[current_difficulty] = []
+                elif current_difficulty:
+                    words_data[current_difficulty].append(line)
+
+        return words_data
     except FileNotFoundError:
         print(f"Error: Word file not found at {file_path}")
         return {}
-    except json.JSONDecodeError:
-        print(f"Error: Could not decode JSON from {file_path}")
+    except Exception as e:
+        print(f"Error loading TXT file {file_path}: {e}")
         return {}
 
-def get_random_word(words_data: Dict[str, List[str]], difficulty: str) -> str:
-    """
-    Selects a random word from the provided data based on difficulty.
 
-    Args:
-        words_data (Dict[str, List[str]]): The dictionary of words.
-        difficulty (str): The chosen difficulty ('facile', 'moyen', 'difficile').
-
-    Returns:
-        str: A random word in uppercase. Returns an empty string if the difficulty
-             or word list is not available.
+def load_words(language):
     """
+    Load words for the given language.
+    Both English and French words are loaded from TXT files.
+    """
+    if language == 'en':
+        file_path = os.path.join(DATA_DIR, 'words_en.txt')
+    elif language == 'fr':
+        file_path = os.path.join(DATA_DIR, 'words_fr.txt')
+    else:
+        print(f"Error: Unsupported language '{language}'")
+        return {}
+
+    return load_words_from_txt(file_path)
+
+
+def get_random_word(words_data, difficulty):
+    """Select random word from words_data based on difficulty level."""
     difficulty_key = difficulty.lower()
     if difficulty_key not in words_data or not words_data[difficulty_key]:
         return ""
-        
+
     word = random.choice(words_data[difficulty_key])
     return word.upper()
 
-def get_word(language: str, difficulty: str) -> str:
-    """
-    A helper function that combines loading words and getting a random one.
 
-    Args:
-        language (str): The language code ('fr' or 'en').
-        difficulty (str): The difficulty level ('facile', 'moyen', 'difficile').
-
-    Returns:
-        str: A random word, or an empty string if unsuccessful.
-    """
+def get_word(language, difficulty):
+    """Get random word for given language and difficulty."""
     words_data = load_words(language)
     if not words_data:
         return ""
     return get_random_word(words_data, difficulty)
+
+
+def add_word_to_txt(file_path, word, difficulty):
+    """
+    Add a word to a TXT file under the specified difficulty section.
+    Returns True if successful, False otherwise.
+    """
+    try:
+        words_data = load_words_from_txt(file_path)
+
+        difficulty_key = difficulty.lower()
+        if difficulty_key not in words_data:
+            words_data[difficulty_key] = []
+
+        word_lower = word.lower()
+
+        # Check if word already exists
+        word_exists = False
+        for w in words_data[difficulty_key]:
+            if w.lower() == word_lower:
+                word_exists = True
+                break
+
+        if word_exists:
+            print(f"Word '{word}' already exists in {difficulty} difficulty")
+            return False
+
+        words_data[difficulty_key].append(word_lower)
+
+        with open(file_path, 'w', encoding='utf-8') as f:
+            for diff_level in ['facile', 'moyen', 'difficile']:
+                if diff_level in words_data and words_data[diff_level]:
+                    f.write(f"[{diff_level}]\n")
+                    for w in words_data[diff_level]:
+                        f.write(f"{w}\n")
+                    f.write("\n")
+
+        return True
+    except Exception as e:
+        print(f"Error adding word to TXT file: {e}")
+        return False
+
+
+def add_word(language, word, difficulty):
+    """
+    Add a word to the appropriate TXT file based on language.
+    Returns True if successful, False otherwise.
+    """
+    if not word or not word.strip():
+        print("Error: Word cannot be empty")
+        return False
+
+    if difficulty.lower() not in ['facile', 'moyen', 'difficile']:
+        print(f"Error: Invalid difficulty '{difficulty}'. Must be 'facile', 'moyen', or 'difficile'")
+        return False
+
+    word = word.strip()
+
+    if language == 'en':
+        file_path = os.path.join(DATA_DIR, 'words_en.txt')
+    elif language == 'fr':
+        file_path = os.path.join(DATA_DIR, 'words_fr.txt')
+    else:
+        print(f"Error: Unsupported language '{language}'")
+        return False
+
+    success = add_word_to_txt(file_path, word, difficulty)
+
+    if success:
+        print(f"Word '{word}' added successfully to {language} words ({difficulty})")
+
+    return success

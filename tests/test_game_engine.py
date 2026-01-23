@@ -37,7 +37,7 @@ def test_create_game_basic():
     game_state = game_engine.create_game("PYTHON")
 
     assert_equal(game_state["secret_word"], "PYTHON", "test_create_game_basic")
-    assert_equal(game_state["max_errors"], 6, "test_create_game_basic")
+    assert_equal(game_state["max_errors"], 7, "test_create_game_basic")
     assert_equal(game_state["errors"], 0, "test_create_game_basic")
     assert_equal(game_state["status"], "in_progress", "test_create_game_basic")
     assert_equal(len(game_state["letters_played"]), 0, "test_create_game_basic")

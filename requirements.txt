@@ -1,3 +1,7 @@
-numpy
-opencv-python
-pygame
+# Hangman (Le Pendu) Project Dependencies
+
+# Pygame - Used for graphical user interface (all UI views)
+pygame>=2.5.0
+
+# OpenCV - Used for image processing in game mode views
+opencv-python>=4.8.0

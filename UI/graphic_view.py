@@ -1,7 +1,3 @@
-"""
-Module graphic_view - Interface graphique Pygame pour le jeu du Pendu
-Contient toute la logique de l'interface utilisateur avec Pygame
-"""
 import pygame
 import sys
 import os
@@ -12,11 +8,8 @@ from UI import pygame_utils
 from utils import language_manager
 
 
+# Main Pygame GUI function - displays main menu with game modes and language options
 def main_gui():
-    """
-    Fonction principale de l'interface graphique Pygame
-    Affiche le menu principal avec les modes de jeu et options de langue
-    """
     pygame.init()
     pygame.mixer.init()
 
@@ -123,6 +116,7 @@ def main_gui():
         rect_normal = pygame.Rect(target_x, start_y + spacing, btn_w_base, btn_h_base)
         rect_difficile = pygame.Rect(target_x, start_y + spacing * 2, btn_w_base, btn_h_base)
         rect_infini = pygame.Rect(target_x, start_y + spacing * 3, btn_w_base, btn_h_base)
+        rect_add_word = pygame.Rect(target_x, start_y + spacing * 4, btn_w_base, btn_h_base)
 
         # Chemins vers les scripts spécifiques
         buttons_config = [

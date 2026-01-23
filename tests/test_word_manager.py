@@ -115,6 +115,38 @@ def test_get_word_invalid_difficulty():
         print("ERROR - test_get_word_invalid_difficulty: should return empty string")
 
 
+def test_load_words_from_txt():
+    """Test that English words are loaded from TXT format."""
+    words = word_manager.load_words("en")
+
+    if "facile" in words and len(words["facile"]) > 0:
+        print("OK - test_load_words_from_txt")
+    else:
+        print("ERROR - test_load_words_from_txt: TXT loading failed")
+
+
+def test_load_words_french_txt():
+    """Test that French words are loaded from TXT format."""
+    words = word_manager.load_words("fr")
+
+    if "facile" in words and len(words["facile"]) > 0:
+        print("OK - test_load_words_french_txt")
+    else:
+        print("ERROR - test_load_words_french_txt: TXT loading failed")
+
+
+def test_add_word_validation():
+    """Test add_word input validation."""
+    result1 = word_manager.add_word("fr", "", "facile")
+    result2 = word_manager.add_word("fr", "test", "invalid_difficulty")
+    result3 = word_manager.add_word("xyz", "test", "facile")
+
+    if not result1 and not result2 and not result3:
+        print("OK - test_add_word_validation")
+    else:
+        print("ERROR - test_add_word_validation: should reject invalid inputs")
+
+
 # Run all tests
 print("Word Manager Tests")
 print("")
@@ -129,6 +161,9 @@ test_get_random_word_uppercase()
 test_get_word_french_facile()
 test_get_word_invalid_language()
 test_get_word_invalid_difficulty()
+test_load_words_from_txt()
+test_load_words_french_txt()
+test_add_word_validation()
 
 print("")
 print("Tests finished")

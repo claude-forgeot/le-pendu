@@ -53,10 +53,10 @@ IMG_RIGHT_LEG = os.path.join(IMAGES_DIR, "jambe_droite.png")
 IMG_LEFT_LEG = os.path.join(IMAGES_DIR, "jambe_gauche.png")
 
 # Audio paths
-AUDIO_MAIN_MENU = os.path.join(AUDIOS_DIR, "main.mp3")
-AUDIO_HARD_MODE = os.path.join(AUDIOS_DIR, "difficile.mp3")
-AUDIO_CLICK = os.path.join(AUDIOS_DIR, "click.mp3")
-AUDIO_LOSE_HARD = os.path.join(AUDIOS_DIR, "losehard.mp3")
+AUDIO_MAIN_MENU = os.path.join(AUDIOS_DIR, "main.ogg")
+AUDIO_HARD_MODE = os.path.join(AUDIOS_DIR, "difficile.ogg")
+AUDIO_CLICK = os.path.join(AUDIOS_DIR, "click.ogg")
+AUDIO_LOSE_HARD = os.path.join(AUDIOS_DIR, "losehard.ogg")
 
 # Video paths (note: folder may be named "vidéo" with accent)
 VIDEO_LOSE_HARD = os.path.join(ASSETS_DIR, "vidéo", "losehard.mp4")

@@ -95,7 +95,7 @@ def return_to_main_menu():
 
 
 def play_win_sequence():
-    """Sequence for winning: black fade, winhard image + winhard.mp3 audio, then win screen."""
+    """Sequence for winning: black fade, winhard image + winhard.ogg audio, then win screen."""
     pygame.mixer.music.stop()
     
     # 1. Fondu au noir
@@ -110,7 +110,7 @@ def play_win_sequence():
 
     # 2. Image et Audio
     win_img_path = os.path.join("assets", "images", "winhard.png")
-    win_audio_path = os.path.join("assets", "sounds", "winhard.mp3")
+    win_audio_path = os.path.join("assets", "audios", "winhard.ogg")
     
     if os.path.exists(win_img_path):
         win_img = pygame.image.load(win_img_path).convert()
@@ -132,11 +132,11 @@ def play_win_sequence():
 
 
 def play_lose_sequence(secret_word, state):
-    """Play the loss sequence with video and audio losehard.mp3 starting at 12s."""
+    """Play the loss sequence with video and audio losehard.ogg starting at 12s."""
     pygame.mixer.music.stop()
-    
+
     video_path = constants.VIDEO_LOSE_HARD
-    audio_path = os.path.join("assets", "sounds", "losehard.mp3")
+    audio_path = os.path.join("assets", "audios", "losehard.ogg")
     
     cap = cv2.VideoCapture(video_path)
     
@@ -266,7 +266,11 @@ def draw_interface(state, secret, timer, mouse_pos):
     surf_mot = fonts["word"].render(" ".join(masked), True, constants.WHITE)
     screen.blit(surf_mot, (constants.WIDTH // 2 - surf_mot.get_width() // 2, constants.HEIGHT - 180))
 
-    wrong_letters = [l for l in state["letters_played"] if l not in secret.lower()]
+    wrong_letters = []
+    for l in state["letters_played"]:
+        if l not in secret.lower():
+            wrong_letters.append(l)
+
     errors_text = language_manager.get_text("hard_errors")
     screen.blit(fonts["small"].render(errors_text, True, constants.RED), (20, constants.HEIGHT - 70))
     screen.blit(fonts["small"].render(", ".join(wrong_letters).upper(), True, constants.WHITE), (20, constants.HEIGHT - 40))

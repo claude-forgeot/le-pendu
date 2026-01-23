@@ -1,7 +1,11 @@
+"""
+Main GUI controller for the Hangman game.
+Single window architecture - all views share the same pygame window.
+"""
+
 import pygame
 import sys
 import os
-import subprocess
 import json
 
 from UI import constants
@@ -9,8 +13,16 @@ from UI import pygame_utils
 from utils import language_manager
 
 
-# Main Pygame GUI function - displays main menu with game modes and language options
-def main_gui():
+# Global pygame objects (shared across all views)
+screen = None
+fonts = {}
+clock = None
+
+
+def initialize_pygame():
+    """Initialize pygame once for the entire application."""
+    global screen, fonts, clock
+
     pygame.init()
     pygame.mixer.init()
 
@@ -18,53 +30,78 @@ def main_gui():
         (constants.WIDTH, constants.HEIGHT),
         pygame.RESIZABLE
     )
-    pygame.display.set_caption("Le Pendu - Interface Responsive")
+    pygame.display.set_caption("Le Pendu")
 
-    # Chemins des images door et book
+    fonts = pygame_utils.create_fonts()
+    pygame_utils.load_sounds()
+    clock = pygame.time.Clock()
+
+
+def load_main_menu_resources():
+    """Load resources specific to main menu."""
+    resources = {}
+
     path_door = os.path.join(constants.BASE_DIR, "assets", "images", "door.png")
     path_book = os.path.join(constants.BASE_DIR, "assets", "images", "book.png")
-    path_scores = os.path.join(constants.BASE_DIR, "highscores.json")
 
     try:
-        img_background = pygame.image.load(constants.IMG_BACKGROUND_HOME)
-        img_logo = pygame.image.load(constants.IMG_LOGO)
-        img_fr = pygame.image.load(constants.IMG_FLAG_FR)
-        img_us = pygame.image.load(constants.IMG_FLAG_US)
-        img_door = pygame.image.load(path_door)
-        img_book = pygame.image.load(path_book)
+        resources["background"] = pygame.image.load(constants.IMG_BACKGROUND_HOME)
+        resources["logo"] = pygame.image.load(constants.IMG_LOGO)
+        resources["flag_fr"] = pygame.image.load(constants.IMG_FLAG_FR)
+        resources["flag_us"] = pygame.image.load(constants.IMG_FLAG_US)
+        resources["door"] = pygame.image.load(path_door)
+        resources["book"] = pygame.image.load(path_book)
+    except pygame.error as e:
+        print(f"Error loading main menu resources: {e}")
+        return None
 
+    return resources
+
+
+def main_menu_view():
+    """
+    Main menu view - displays game modes and language options.
+    Returns the next view name or None to quit.
+    """
+    global screen, fonts
+
+    resources = load_main_menu_resources()
+    if not resources:
+        return None
+
+    # Start main menu music
+    try:
         pygame.mixer.music.load(constants.AUDIO_MAIN_MENU)
         pygame.mixer.music.play(-1)
-    except pygame.error as e:
-        print(f"Error loading resources: {e}")
-        pygame.quit()
-        sys.exit()
+    except pygame.error:
+        pass
 
+    path_scores = os.path.join(constants.BASE_DIR, "highscores.json")
     show_rules = False
     show_scores = False
-    running = True
 
-    while running:
+    while True:
         win_w, win_h = screen.get_size()
         mouse_pos = pygame.mouse.get_pos()
         current_lang = language_manager.get_current_language()
 
-        # Fond
-        bg_scaled = pygame.transform.scale(img_background, (win_w, win_h))
+        # Background
+        bg_scaled = pygame.transform.scale(resources["background"], (win_w, win_h))
         screen.blit(bg_scaled, (0, 0))
 
         # Logo and book (hidden if show_scores is True)
         logo_h = 0
         if not show_scores:
             logo_w = int(win_w * 0.22)
-            if logo_w < 180: logo_w = 180
-            logo_ratio = logo_w / img_logo.get_width()
-            logo_h = int(img_logo.get_height() * logo_ratio)
-            logo_scaled = pygame.transform.scale(img_logo, (logo_w, logo_h))
+            if logo_w < 180:
+                logo_w = 180
+            logo_ratio = logo_w / resources["logo"].get_width()
+            logo_h = int(resources["logo"].get_height() * logo_ratio)
+            logo_scaled = pygame.transform.scale(resources["logo"], (logo_w, logo_h))
             screen.blit(logo_scaled, (30, 30))
 
             book_size = int(logo_h * 0.35)
-            book_scaled = pygame.transform.scale(img_book, (book_size, book_size))
+            book_scaled = pygame.transform.scale(resources["book"], (book_size, book_size))
             rect_book = pygame.Rect(30 + logo_w + 20, 30 + (logo_h // 3), book_size, book_size)
             screen.blit(book_scaled, rect_book)
         else:
@@ -73,10 +110,11 @@ def main_gui():
 
         # Flags and door
         flag_w = int(win_w * 0.08)
-        if flag_w < 60: flag_w = 60
+        if flag_w < 60:
+            flag_w = 60
         flag_h = int(flag_w * 0.66)
         door_size = int(flag_h * 1.5)
-        door_scaled = pygame.transform.scale(img_door, (door_size, door_size))
+        door_scaled = pygame.transform.scale(resources["door"], (door_size, door_size))
 
         pos_door_x = win_w - door_size - 30
         pos_us_x = pos_door_x - flag_w - 30
@@ -92,8 +130,8 @@ def main_gui():
         elif current_lang == "en":
             pygame.draw.rect(screen, (255, 235, 59), rect_us.inflate(10, 10), width=4, border_radius=5)
 
-        fr_final = img_fr.copy()
-        us_final = img_us.copy()
+        fr_final = resources["flag_fr"].copy()
+        us_final = resources["flag_us"].copy()
         if rect_fr.collidepoint(mouse_pos):
             fr_final.fill((40, 40, 40), special_flags=pygame.BLEND_RGB_ADD)
         if rect_us.collidepoint(mouse_pos):
@@ -105,9 +143,11 @@ def main_gui():
 
         # Button parameters
         btn_w_base = int(win_w * 0.22)
-        if btn_w_base < 220: btn_w_base = 220
+        if btn_w_base < 220:
+            btn_w_base = 220
         btn_h_base = int(win_h * 0.09)
-        if btn_h_base < 60: btn_h_base = 60
+        if btn_h_base < 60:
+            btn_h_base = 60
 
         # Shift left if scores panel is shown
         target_x = -btn_w_base - 100 if show_scores else 40
@@ -118,19 +158,19 @@ def main_gui():
         rect_normal = pygame.Rect(target_x, start_y + spacing, btn_w_base, btn_h_base)
         rect_difficile = pygame.Rect(target_x, start_y + spacing * 2, btn_w_base, btn_h_base)
         rect_infini = pygame.Rect(target_x, start_y + spacing * 3, btn_w_base, btn_h_base)
-        rect_add_word = pygame.Rect(target_x, start_y + spacing * 4, btn_w_base, btn_h_base)
+        rect_add_word = pygame.Rect(target_x + btn_w_base + 20, start_y + spacing * 3, btn_w_base, btn_h_base)
 
-        # Button configuration: (rect, key, color, hover_color, file_path)
+        # Button configuration: (rect, key, color, hover_color, view_name)
         buttons_config = [
-            (rect_facile, "button_facile", constants.GREEN, constants.GREEN_HOVER, "easy_mode_view.py"),
-            (rect_normal, "button_normal", constants.ORANGE, constants.ORANGE_HOVER, "normal_mode_view.py"),
-            (rect_difficile, "button_difficile", constants.RED, constants.RED_HOVER, "hard_mode_view.py"),
-            (rect_infini, "button_infini", constants.DARK_BLUE, constants.DARK_BLUE_HOVER, "infinite_mode_view.py"),
-            (rect_add_word, "button_add_word", constants.PURPLE, constants.PURPLE_HOVER, "add_word_view.py")
+            (rect_facile, "button_facile", constants.GREEN, constants.GREEN_HOVER, "easy_mode"),
+            (rect_normal, "button_normal", constants.ORANGE, constants.ORANGE_HOVER, "normal_mode"),
+            (rect_difficile, "button_difficile", constants.RED, constants.RED_HOVER, "hard_mode"),
+            (rect_infini, "button_infini", constants.DARK_BLUE, constants.DARK_BLUE_HOVER, "infinite_mode"),
+            (rect_add_word, "button_add_word", constants.PURPLE, constants.PURPLE_HOVER, "add_word")
         ]
 
         # Draw game mode buttons
-        for r, key, color, hover_c, file_path in buttons_config:
+        for r, key, color, hover_c, view_name in buttons_config:
             is_hover = r.collidepoint(mouse_pos)
             draw_rect = r.inflate(24, 12) if is_hover else r
             font_size = int(btn_h_base * (0.52 if is_hover else 0.45))
@@ -142,25 +182,26 @@ def main_gui():
         is_h_scores = rect_scores.collidepoint(mouse_pos)
         d_r_scores = rect_scores.inflate(20, 10) if is_h_scores else rect_scores
         f_s_scores = int(btn_h_base * 0.52) if is_h_scores else int(btn_h_base * 0.45)
-        score_btn_text = language_manager.get_text("button_scores") if not show_scores else ("RETOUR" if current_lang=="fr" else "BACK")
+        if show_scores:
+            score_btn_text = "RETOUR" if current_lang == "fr" else "BACK"
+        else:
+            score_btn_text = language_manager.get_text("button_scores")
         pygame_utils.draw_rounded_button(screen, constants.GOLD_HOVER if is_h_scores else constants.GOLD, d_r_scores, score_btn_text, pygame.font.SysFont("Arial", f_s_scores, bold=True))
 
         # Scores panel
         if show_scores:
-            # Taille réduite du titre pour éviter les collisions avec les drapeaux
             title_font = pygame.font.SysFont("Arial", int(win_h * 0.055), bold=True)
             title_text = "CLASSEMENT (TOP 5)" if current_lang == "fr" else "LEADERBOARD (TOP 5)"
             title_surf = title_font.render(title_text, True, (0, 0, 0))
-            # Positionnement un peu plus bas pour laisser de l'air en haut
             screen.blit(title_surf, (win_w // 2 - title_surf.get_width() // 2, 55))
 
-            # Chargement des scores
             all_data = {}
             if os.path.exists(path_scores):
                 try:
                     with open(path_scores, "r") as f:
                         all_data = json.load(f)
-                except: pass
+                except:
+                    pass
 
             panel_margin = 40
             panel_area_w = win_w - (panel_margin * 2)
@@ -168,7 +209,6 @@ def main_gui():
             panel_h = win_h * 0.6
             panel_y = 130
 
-            # Correspondance entre les clés JSON et les boutons
             cat_mapping = {
                 "button_facile": "facile",
                 "button_normal": "normal",
@@ -181,12 +221,13 @@ def main_gui():
             name_label = "NOM" if current_lang == "fr" else "NAME"
             score_label = "SCORE" if current_lang == "fr" else "SCORE"
 
-            for i, key in enumerate(difficulty_keys):
+            for i in range(len(difficulty_keys)):
+                key = difficulty_keys[i]
                 x_pos = panel_margin + i * (panel_w + 20)
-                s = pygame.Surface((panel_w, panel_h), pygame.SRCALPHA)
+                s = pygame.Surface((panel_w, int(panel_h)), pygame.SRCALPHA)
                 s.fill((0, 80, 180, 175))
                 screen.blit(s, (x_pos, panel_y))
-                pygame.draw.rect(screen, (255, 255, 255), (x_pos, panel_y, panel_w, panel_h), 2, border_radius=8)
+                pygame.draw.rect(screen, (255, 255, 255), (x_pos, panel_y, panel_w, int(panel_h)), 2, border_radius=8)
 
                 diff_f = pygame.font.SysFont("Arial", int(panel_w * 0.15), bold=True)
                 diff_t = diff_f.render(language_manager.get_text(key), True, (255, 255, 255))
@@ -214,7 +255,8 @@ def main_gui():
                           "- Difficile : 5 vies" if current_lang == "fr" else "- Hard: 5 lives",
                           "- Infini : Illimite" if current_lang == "fr" else "- Infinite: No limit",
                           "", "Cliquez pour fermer" if current_lang == "fr" else "Click to close"]
-            for i, text in enumerate(rules_text):
+            for i in range(len(rules_text)):
+                text = rules_text[i]
                 if i == 0:
                     color = (211, 47, 47)
                     size_factor = 0.08
@@ -233,13 +275,13 @@ def main_gui():
         # Event handling
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
+                return None
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if show_rules:
                     show_rules = False
                     continue
                 if rect_door.collidepoint(event.pos):
-                    running = False
+                    return None
                 if not show_scores and rect_book.collidepoint(event.pos):
                     show_rules = True
                 if rect_fr.collidepoint(event.pos):
@@ -252,18 +294,59 @@ def main_gui():
 
                 # Game mode buttons click handling
                 if not show_scores:
-                    for r, key, color, hover_c, file_path in buttons_config:
+                    for r, key, color, hover_c, view_name in buttons_config:
                         if r.collidepoint(event.pos):
                             pygame_utils.play_click_sound()
                             pygame.mixer.music.stop()
-                            pygame.quit()
-                            subprocess.Popen([sys.executable, os.path.join(constants.BASE_DIR, "UI", file_path)])
-                            sys.exit()
+                            return view_name
 
         pygame.display.flip()
+        clock.tick(60)
+
+
+def run_game():
+    """Main game loop - manages view transitions."""
+    global screen, fonts, clock
+
+    initialize_pygame()
+
+    current_view = "main_menu"
+
+    while current_view is not None:
+        if current_view == "main_menu":
+            current_view = main_menu_view()
+
+        elif current_view == "easy_mode":
+            from UI import easy_mode_view
+            current_view = easy_mode_view.run_view(screen, fonts, clock)
+
+        elif current_view == "normal_mode":
+            from UI import normal_mode_view
+            current_view = normal_mode_view.run_view(screen, fonts, clock)
+
+        elif current_view == "hard_mode":
+            from UI import hard_mode_view
+            current_view = hard_mode_view.run_view(screen, fonts, clock)
+
+        elif current_view == "infinite_mode":
+            from UI import infinite_mode_view
+            current_view = infinite_mode_view.run_view(screen, fonts, clock)
+
+        elif current_view == "add_word":
+            from UI import add_word_view
+            current_view = add_word_view.run_view(screen, fonts, clock)
+
+        else:
+            current_view = "main_menu"
 
     pygame.quit()
     sys.exit()
+
+
+def main_gui():
+    """Entry point for the game GUI."""
+    run_game()
+
 
 if __name__ == "__main__":
     main_gui()

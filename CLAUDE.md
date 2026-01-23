@@ -4,6 +4,46 @@ This document defines the coding standards and conventions for the Hangman (Le P
 
 Project uses Pygame for graphical interface only (no CLI).
 
+## Project Structure
+
+```
+le-pendu/
+    main.py                 # Entry point - calls UI.main_gui()
+    UI/
+        __init__.py
+        graphic_view.py     # Main controller and view manager
+        constants.py        # Shared constants (colors, paths, sizes)
+        pygame_utils.py     # Helper functions for pygame
+        easy_mode_view.py   # Easy mode game view
+        normal_mode_view.py # Normal mode game view
+        hard_mode_view.py   # Hard mode game view
+        infinite_mode_view.py # Infinite mode game view
+        add_word_view.py    # Add word form view
+    models/
+        game_engine.py      # Core game logic
+    utils/
+        word_manager.py     # Word loading and management
+        language_manager.py # Localization
+        score_manager.py    # Score tracking
+    data/
+        words_fr.txt        # French words by difficulty
+        words_en.txt        # English words by difficulty
+        locales.txt         # UI translations
+    assets/
+        images/             # Background images, hangman sprites
+        audios/             # Music and sound effects (OGG format)
+    tests/
+        test_game_engine.py # Unit tests
+```
+
+## Dependencies
+
+Required packages:
+- `pygame-ce` (Community Edition) - Graphics and audio
+- `opencv-python` - Video playback for loss sequences
+
+Install with: `pip install pygame-ce opencv-python`
+
 ## CRITICAL RULE: No Decorations
 
 NEVER add decorative elements to code, comments, or output unless explicitly requested by the user:
@@ -50,7 +90,7 @@ Use only basic Python concepts that are taught at beginner level:
 - Decorators
 - Generators (yield)
 - Type annotations (: str, -> int, etc.)
-- Advanced modules unless necessary (cv2 and subprocess are exceptions for video/navigation)
+- Advanced modules unless necessary (cv2 is an exception for video playback)
 
 ## CRITICAL RULE: Data Storage Format
 
@@ -240,6 +280,78 @@ BAD:
 Added super cool language switching!!!
 ```
 
+## Single-Window Architecture
+
+The game runs in a single pygame window. Navigation between views is handled by returning view names.
+
+### View Manager
+
+The main controller [UI/graphic_view.py](UI/graphic_view.py) manages all view transitions:
+- Initializes pygame once at startup
+- Creates shared screen, fonts, and clock objects
+- Routes between views based on return values
+
+```python
+def run_game():
+    """Main game loop - manages view transitions."""
+    initialize_pygame()
+    current_view = "main_menu"
+
+    while current_view is not None:
+        if current_view == "main_menu":
+            current_view = main_menu_view()
+        elif current_view == "easy_mode":
+            from UI import easy_mode_view
+            current_view = easy_mode_view.run_view(screen, fonts, clock)
+        # ... other views
+
+    pygame.quit()
+    sys.exit()
+```
+
+### View Entry Point
+
+Each view module must export a `run_view(screen, fonts, clock)` function:
+
+```python
+def run_view(screen, fonts, clock):
+    """
+    Main entry point for this view.
+    Returns the next view name: "main_menu", "easy_mode", "quit", etc.
+    Returns None to quit the game.
+    """
+    load_resources()
+    # ... view logic
+    return "main_menu"  # Navigate to next view
+```
+
+### View Return Values
+
+Views return strings to indicate the next view:
+- `"main_menu"` - Return to main menu
+- `"easy_mode"` - Start easy mode
+- `"normal_mode"` - Start normal mode
+- `"hard_mode"` - Start hard mode
+- `"infinite_mode"` - Start infinite mode
+- `"add_word"` - Open add word screen
+- `"settings"` - Open settings
+- `"highscores"` - Show highscores
+- `None` - Quit the game
+
+### No Subprocess
+
+NEVER use subprocess to launch game modes. All navigation is done via return values:
+
+BAD:
+```python
+subprocess.Popen([sys.executable, "UI/easy_mode_view.py"])
+```
+
+GOOD:
+```python
+return "easy_mode"
+```
+
 ## Pygame UI Design Patterns
 
 ### Color Scheme
@@ -411,47 +523,58 @@ label = fonts['small'].render("Label:", True, constants.WHITE)
 
 ### View Function Structure
 
-All view functions must follow this structure:
+All view modules must follow this structure with a `run_view` entry point:
 
 ```python
-def my_view(screen, game_state):
+# Module-level variables for resources
+img_bg = None
+imgs = {}
+
+def load_resources():
+    """Load resources for this view."""
+    global img_bg, imgs
+    # Load images, sounds, etc.
+    pass
+
+def initialize_game():
+    """Initialize game state for this view."""
+    # Set up initial state
+    pass
+
+def run_view(screen, fonts, clock):
     """
-    Render my view screen.
-    Returns next view name or None to continue current view.
+    Main entry point for this view.
+    Returns the next view name: "main_menu", "quit", etc.
     """
-    # Initialize on first call
-    if not hasattr(my_view, 'initialized'):
-        # Load resources, initialize state
-        my_view.initialized = True
+    load_resources()
+    game_state = initialize_game()
+    paused = False
 
-    # Get window dimensions
-    w, h = screen.get_size()
+    # Define UI rects
+    btn_back = pygame.Rect(20, 20, 100, 40)
 
-    # Fill background
-    screen.fill(constants.BLACK)
+    while True:
+        clock.tick(60)
+        mouse_pos = pygame.mouse.get_pos()
 
-    # Handle events
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            return "quit"
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            # Handle clicks
-            pass
-        if event.type == pygame.KEYDOWN:
-            # Handle keyboard
-            pass
+        # Handle events
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return None  # Quit game
 
-    # Get mouse position for hover effects
-    mouse_pos = pygame.mouse.get_pos()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if btn_back.collidepoint(event.pos):
+                    return "main_menu"  # Navigate back
 
-    # Draw UI elements with hover detection
-    # ...
+            if event.type == pygame.KEYDOWN:
+                # Handle keyboard input
+                pass
 
-    # Update display
-    pygame.display.flip()
+        # Draw UI
+        screen.blit(img_bg, (0, 0))
+        # ... draw other elements
 
-    # Return next view or None
-    return None
+        pygame.display.flip()
 ```
 
 ### Audio Integration
@@ -486,13 +609,24 @@ draw_rounded_button(screen, btn_rect, "Click Me", fonts['medium'],
                    constants.DARK_BLUE, constants.WHITE, is_hover)
 ```
 
-### Example UI View
+### Example UI Views
 
-See [UI/add_word_view.py](UI/add_word_view.py) for a complete reference implementation that demonstrates all these patterns:
-- Overlay with semi-transparent background
-- Responsive button grid
+See these files for reference implementations:
+
+**[UI/add_word_view.py](UI/add_word_view.py)** - Simple view with form input:
+- `run_view(screen, fonts, clock)` entry point
 - Text input with active state
 - Difficulty selection with visual feedback
 - Hover effects on all interactive elements
-- Language selection
-- Back button navigation
+- Back button returning "main_menu"
+
+**[UI/easy_mode_view.py](UI/easy_mode_view.py)** - Game mode view:
+- Module-level resource loading
+- Game loop with pause functionality
+- Win/lose sequences
+- Hint system
+
+**[UI/graphic_view.py](UI/graphic_view.py)** - Main controller:
+- Single pygame initialization
+- View manager pattern
+- View routing based on return values

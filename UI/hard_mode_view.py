@@ -2,7 +2,6 @@
 Hard mode view for the Hangman game.
 Features: 30s timer, 5 max errors, video on loss.
 Score system: Category 'hard' in JSON.
-Run with: python -m UI.hard_mode_view [EN]
 """
 
 import pygame
@@ -10,9 +9,7 @@ import sys
 import os
 import cv2
 import random
-import subprocess
 
-# Add project root to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from models import game_engine
@@ -23,29 +20,19 @@ from UI import constants
 from UI import pygame_utils
 
 
-# Global variables for pygame objects
-screen = None
+# Module-level variables for resources
 img_bg = None
 imgs = {}
-fonts = {}
 
 # Pause button rect
 btn_pause_rect = pygame.Rect(20, 20, 120, 40)
+HINT_CENTER = (constants.WIDTH - 80, constants.HEIGHT - 80)
+HINT_RADIUS = 40
 
 
-def initialize_pygame():
-    """Initialize pygame and load resources."""
-    global screen, img_bg, imgs, fonts
-
-    pygame.init()
-    pygame.mixer.init()
-
-    screen = pygame.display.set_mode((constants.WIDTH, constants.HEIGHT))
-    title = language_manager.get_text("hard_mode_title")
-    pygame.display.set_caption(title)
-
-    fonts = pygame_utils.create_fonts()
-    pygame_utils.load_sounds()
+def load_resources():
+    """Load resources for hard mode."""
+    global img_bg, imgs
 
     try:
         img_bg = pygame.image.load(constants.IMG_BACKGROUND_GAME).convert()
@@ -74,57 +61,62 @@ def initialize_game():
 
     game_state = game_engine.create_game(secret_word, 5)
     timer = 30.0
+    hints_left = 1
+    hints_used = 0
 
-    return game_state, secret_word, timer
+    return game_state, secret_word, timer, hints_left, hints_used
 
 
-def return_to_main_menu():
-    """Relance le menu principal de manière indépendante et ferme ce script."""
-    pygame.mixer.music.stop()
-    pygame.mixer.stop()
-    pygame.quit()
-    
-    # On cherche le chemin de main.py (à la racine)
-    main_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "main.py")
-    
-    if os.path.exists(main_path):
-        subprocess.Popen([sys.executable, main_path])
-    else:
-        # Si on est déjà à la racine
-        subprocess.Popen([sys.executable, "main.py"])
-        
-    sys.exit()
+def use_real_hint(state, secret):
+    """Reveals a letter that IS in the word (direct hint)."""
+    word_letters = set(secret.lower())
+    played_letters = set(state["letters_played"])
 
-def get_name_input(final_score):
-    """Saisie du nom pour le Highscore Hard (5 chars)."""
+    available_hints = []
+    for letter in word_letters:
+        if letter not in played_letters:
+            available_hints.append(letter)
+
+    if available_hints:
+        letter = random.choice(available_hints)
+        game_engine.play_letter(state, letter)
+        return True
+    return False
+
+
+def get_name_input(screen, fonts, final_score):
+    """Name input for Highscore Hard (5 chars)."""
     name = ""
     while True:
         screen.fill((0, 0, 0))
-        prompt = fonts["info"].render("RECORD DIFFICILE ! Entre ton nom :", True, constants.GOLD)
-        name_surf = fonts["word"].render(name + ("_" if (pygame.time.get_ticks() // 500) % 2 == 0 else ""), True, constants.WHITE)
-        instr = fonts["small"].render("Appuie sur ENTREE pour valider (5 chars max)", True, constants.WHITE)
-        
+        prompt = fonts["info"].render(language_manager.get_text("new_record"), True, constants.GOLD)
+        cursor = "_" if (pygame.time.get_ticks() // 500) % 2 == 0 else ""
+        name_surf = fonts["word"].render(name + cursor, True, constants.WHITE)
+        instr = fonts["small"].render(language_manager.get_text("press_enter"), True, constants.WHITE)
+
         screen.blit(prompt, prompt.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 - 50)))
         screen.blit(name_surf, name_surf.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 + 20)))
         screen.blit(instr, instr.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 + 80)))
-        
+
         pygame.display.flip()
         for event in pygame.event.get():
-            if event.type == pygame.QUIT: pygame.quit(); sys.exit()
+            if event.type == pygame.QUIT:
+                return None
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN and len(name) > 0:
                     score_manager.save_score(name, final_score, category="difficile")
-                    return
-                elif event.key == pygame.K_BACKSPACE: name = name[:-1]
+                    return name
+                elif event.key == pygame.K_BACKSPACE:
+                    name = name[:-1]
                 elif len(name) < 5 and event.unicode.isalpha():
                     name += event.unicode.upper()
 
-def play_win_sequence():
+
+def play_win_sequence(screen, fonts, secret_word, state, time_remaining, hints_used):
     """Sequence for winning: black fade, winhard image + winhard.ogg audio, then win screen."""
     pygame.mixer.music.stop()
-    final_score = score_manager.calculate_score(state)
-    
-    # 1. Fondu au noir
+    final_score = score_manager.calculate_score(state, time_remaining, hints_used)
+
     fade = pygame.Surface((constants.WIDTH, constants.HEIGHT))
     fade.fill((0, 0, 0))
     for alpha in range(0, 255, 5):
@@ -134,10 +126,10 @@ def play_win_sequence():
         pygame.display.flip()
         pygame.time.delay(10)
 
-    # 2. Image et Audio
     win_img_path = os.path.join("assets", "images", "winhard.png")
     win_audio_path = os.path.join("assets", "audios", "winhard.ogg")
-    
+
+    win_img = None
     if os.path.exists(win_img_path):
         win_img = pygame.image.load(win_img_path).convert()
         win_img = pygame.transform.scale(win_img, (constants.WIDTH, constants.HEIGHT))
@@ -150,34 +142,73 @@ def play_win_sequence():
         while pygame.mixer.music.get_busy():
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
+                    return "quit"
             pygame.time.delay(100)
     else:
         pygame.time.delay(2000)
-        
-    # 3. Highscore check
-    if score_manager.check_if_highscore(final_score, category="hard"):
-        get_name_input(final_score)
-    
-    return final_score
+
+    if score_manager.check_if_highscore(final_score, category="difficile"):
+        result = get_name_input(screen, fonts, final_score)
+        if result is None:
+            return "quit"
+
+    rect_retry_win = pygame.Rect(constants.WIDTH // 2 - 210, constants.HEIGHT - 120, 200, 50)
+    rect_quit_win = pygame.Rect(constants.WIDTH // 2 + 10, constants.HEIGHT - 120, 200, 50)
+
+    while True:
+        m_pos = pygame.mouse.get_pos()
+        screen.blit(img_bg, (0, 0))
+        overlay = pygame.Surface((constants.WIDTH, constants.HEIGHT), pygame.SRCALPHA)
+        overlay.fill(constants.BLACK_OVERLAY)
+        screen.blit(overlay, (0, 0))
+
+        win_text = language_manager.get_text("hard_win")
+        msg = fonts["word"].render(win_text, True, constants.GREEN)
+        msg_score = fonts["info"].render(f"SCORE: {final_score}", True, constants.GOLD)
+        msg2 = fonts["info"].render(f"{secret_word}", True, constants.WHITE)
+
+        screen.blit(msg, msg.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 - 80)))
+        screen.blit(msg_score, msg_score.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 - 20)))
+        screen.blit(msg2, msg2.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 + 40)))
+
+        retry_t = language_manager.get_text("hard_retry")
+        quit_t = language_manager.get_text("hard_quit")
+
+        pygame_utils.draw_button_with_border(screen, rect_retry_win, constants.DARK_BLUE, constants.DARK_BLUE_HOVER, m_pos, retry_t, fonts["button"])
+        pygame_utils.draw_button_with_border(screen, rect_quit_win, constants.DARK_BLUE, constants.DARK_BLUE_HOVER, m_pos, quit_t, fonts["button"])
+
+        pygame.display.flip()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return "quit"
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if rect_retry_win.collidepoint(event.pos):
+                    pygame_utils.play_click_sound()
+                    return "restart"
+                if rect_quit_win.collidepoint(event.pos):
+                    pygame_utils.play_click_sound()
+                    return "main_menu"
 
 
-def play_lose_sequence(secret_word, state):
+def play_lose_sequence(screen, fonts, secret_word, state):
     """Play the loss sequence with video and audio losehard.ogg starting at 12s."""
     pygame.mixer.music.stop()
 
     video_path = constants.VIDEO_LOSE_HARD
     audio_path = os.path.join("assets", "audios", "losehard.ogg")
-    
-    cap = cv2.VideoCapture(video_path)
-    
-    if not cap.isOpened():
-        print(f"ERREUR : Fichier vidéo introuvable : {video_path}")
-        return "restart"
 
-    fps = cap.get(cv2.CAP_PROP_FPS) or 30
-    cap.set(cv2.CAP_PROP_POS_MSEC, 12000)
+    cap = cv2.VideoCapture(video_path)
+
+    if not cap.isOpened():
+        print(f"Error: Video file not found: {video_path}")
+        cap = None
+    else:
+        cap.set(cv2.CAP_PROP_POS_MSEC, 12000)
+
+    fps = 30
+    if cap:
+        fps = cap.get(cv2.CAP_PROP_FPS) or 30
 
     if os.path.exists(audio_path):
         pygame.mixer.music.load(audio_path)
@@ -186,39 +217,41 @@ def play_lose_sequence(secret_word, state):
         pygame.mixer.music.load(constants.AUDIO_LOSE_HARD)
         pygame.mixer.music.play(start=12.0)
 
-    clock = pygame.time.Clock()
+    clock_local = pygame.time.Clock()
     last_frame_surf = None
-    
+
     fade = pygame.Surface((constants.WIDTH, constants.HEIGHT))
     fade.fill((0, 0, 0))
-    
-    alpha = 255
-    while cap.isOpened():
-        current_msec = cap.get(cv2.CAP_PROP_POS_MSEC)
-        if current_msec >= 43000:
-            break
-            
-        ret, frame = cap.read()
-        if not ret:
-            break
-            
-        frame = cv2.resize(frame, (constants.WIDTH, constants.HEIGHT))
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frame = frame.swapaxes(0, 1)
-        last_frame_surf = pygame.surfarray.make_surface(frame)
-        
-        screen.blit(last_frame_surf, (0, 0))
-        
-        if alpha > 0:
-            fade.set_alpha(alpha)
-            screen.blit(fade, (0, 0))
-            alpha -= 5 
-            
-        pygame.display.flip()
-        clock.tick(fps)
-        pygame.event.pump()
 
-    cap.release()
+    alpha = 255
+    if cap:
+        while cap.isOpened():
+            current_msec = cap.get(cv2.CAP_PROP_POS_MSEC)
+            if current_msec >= 43000:
+                break
+
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            frame = cv2.resize(frame, (constants.WIDTH, constants.HEIGHT))
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frame = frame.swapaxes(0, 1)
+            last_frame_surf = pygame.surfarray.make_surface(frame)
+
+            screen.blit(last_frame_surf, (0, 0))
+
+            if alpha > 0:
+                fade.set_alpha(alpha)
+                screen.blit(fade, (0, 0))
+                alpha -= 5
+
+            pygame.display.flip()
+            clock_local.tick(fps)
+            pygame.event.pump()
+
+        cap.release()
+
     pygame.mixer.music.stop()
 
     rect_retry = pygame.Rect(constants.WIDTH // 2 - 210, constants.HEIGHT - 120, 200, 50)
@@ -228,6 +261,8 @@ def play_lose_sequence(secret_word, state):
         m_pos = pygame.mouse.get_pos()
         if last_frame_surf:
             screen.blit(last_frame_surf, (0, 0))
+        else:
+            screen.blit(img_bg, (0, 0))
 
         overlay = pygame.Surface((constants.WIDTH, constants.HEIGHT), pygame.SRCALPHA)
         overlay.fill(constants.BLACK_OVERLAY)
@@ -242,28 +277,24 @@ def play_lose_sequence(secret_word, state):
         retry_text = language_manager.get_text("hard_retry")
         quit_text = language_manager.get_text("hard_quit")
 
-        for rect, label in [(rect_retry, retry_text), (rect_back, quit_text)]:
-            pygame_utils.draw_button_with_border(
-                screen, rect, constants.DARK_BLUE, constants.DARK_BLUE_HOVER,
-                m_pos, label, fonts["button"]
-            )
+        pygame_utils.draw_button_with_border(screen, rect_retry, constants.DARK_BLUE, constants.DARK_BLUE_HOVER, m_pos, retry_text, fonts["button"])
+        pygame_utils.draw_button_with_border(screen, rect_back, constants.DARK_BLUE, constants.DARK_BLUE_HOVER, m_pos, quit_text, fonts["button"])
 
         pygame.display.flip()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+                return "quit"
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if rect_retry.collidepoint(event.pos):
                     pygame_utils.play_click_sound()
                     return "restart"
                 if rect_back.collidepoint(event.pos):
                     pygame_utils.play_click_sound()
-                    return_to_main_menu()
+                    return "main_menu"
 
 
-def draw_interface(state, secret, timer, mouse_pos):
+def draw_interface(screen, fonts, state, secret, timer, hints_left, hints_used, mouse_pos):
     """Draw the game interface."""
     screen.blit(img_bg, (0, 0))
 
@@ -271,9 +302,8 @@ def draw_interface(state, secret, timer, mouse_pos):
         screen, btn_pause_rect, constants.DARK_BLUE, constants.DARK_BLUE_HOVER,
         mouse_pos, language_manager.get_text("hard_pause"), fonts["button"]
     )
-    
-    # Score Display
-    current_score = score_manager.calculate_score(state)
+
+    current_score = score_manager.calculate_score(state, timer, hints_used)
     surf_score = fonts["info"].render(f"SCORE: {current_score}", True, constants.WHITE)
     screen.blit(surf_score, (constants.WIDTH - 180, 20))
 
@@ -312,17 +342,24 @@ def draw_interface(state, secret, timer, mouse_pos):
     screen.blit(fonts["small"].render(errors_text, True, constants.RED), (20, constants.HEIGHT - 70))
     screen.blit(fonts["small"].render(", ".join(wrong_letters).upper(), True, constants.WHITE), (20, constants.HEIGHT - 40))
 
+    # Hint button
+    dist = ((mouse_pos[0] - HINT_CENTER[0]) ** 2 + (mouse_pos[1] - HINT_CENTER[1]) ** 2) ** 0.5
+    color = constants.GOLD if dist < HINT_RADIUS else constants.DARK_BLUE
+    pygame.draw.circle(screen, color, HINT_CENTER, HINT_RADIUS)
+    pygame.draw.circle(screen, constants.WHITE, HINT_CENTER, HINT_RADIUS, 2)
 
-def main():
-    """Main game loop."""
-    if len(sys.argv) > 1 and sys.argv[1].upper() == "EN":
-        language_manager.set_language("en")
-    else:
-        language_manager.set_language("fr")
+    hint_label = language_manager.get_text("hint")
+    txt_hint = fonts["small"].render(hint_label + " (" + str(hints_left) + ")", True, constants.WHITE)
+    screen.blit(txt_hint, txt_hint.get_rect(center=HINT_CENTER))
 
-    initialize_pygame()
-    game_state, secret_word, timer = initialize_game()
-    clock = pygame.time.Clock()
+
+def run_view(screen, fonts, clock):
+    """
+    Main entry point for hard mode view.
+    Returns the next view name: "main_menu", "quit", etc.
+    """
+    load_resources()
+    game_state, secret_word, timer, hints_left, hints_used = initialize_game()
     paused = False
 
     w_b, h_b = 180, 50
@@ -330,18 +367,13 @@ def main():
     rect_reset = pygame.Rect(constants.WIDTH // 2 - 90, constants.HEIGHT // 2 + 20, w_b, h_b)
     rect_quit = pygame.Rect(constants.WIDTH // 2 + 100, constants.HEIGHT // 2 + 20, w_b, h_b)
 
-    # Boutons Victoire
-    rect_retry_win = pygame.Rect(constants.WIDTH // 2 - 210, constants.HEIGHT - 120, 200, 50)
-    rect_quit_win = pygame.Rect(constants.WIDTH // 2 + 10, constants.HEIGHT - 120, 200, 50)
-
     while True:
         dt = clock.tick(60) / 1000.0
         mouse_pos = pygame.mouse.get_pos()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+                return None
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if btn_pause_rect.collidepoint(event.pos):
@@ -353,11 +385,20 @@ def main():
                         paused = False
                     if rect_reset.collidepoint(event.pos):
                         pygame_utils.play_click_sound()
-                        game_state, secret_word, timer = initialize_game()
+                        game_state, secret_word, timer, hints_left, hints_used = initialize_game()
                         paused = False
                     if rect_quit.collidepoint(event.pos):
                         pygame_utils.play_click_sound()
-                        return_to_main_menu()
+                        pygame.mixer.music.stop()
+                        return "main_menu"
+
+                # Hint button click
+                dist = ((event.pos[0] - HINT_CENTER[0]) ** 2 + (event.pos[1] - HINT_CENTER[1]) ** 2) ** 0.5
+                if dist < HINT_RADIUS and not paused and hints_left > 0 and game_state["status"] == "in_progress":
+                    pygame_utils.play_click_sound()
+                    if use_real_hint(game_state, secret_word):
+                        hints_left = hints_left - 1
+                        hints_used = hints_used + 1
 
             if not paused and event.type == pygame.KEYDOWN and game_state["status"] == "in_progress":
                 letter = event.unicode.lower()
@@ -371,65 +412,38 @@ def main():
 
                     if game_state["errors"] >= 5:
                         game_state["status"] = "loss"
-                        # Correction: Appel de la sequence et reset immediat
-                        res = play_lose_sequence(secret_word, game_state)
-                        if res == "restart":
-                            game_state, secret_word, timer = initialize_game()
-                            continue
+                        result = play_lose_sequence(screen, fonts, secret_word, game_state)
+                        if result == "restart":
+                            game_state, secret_word, timer, hints_left, hints_used = initialize_game()
+                        elif result == "main_menu":
+                            return "main_menu"
+                        elif result == "quit":
+                            return None
 
         if game_state["status"] == "in_progress" and not paused:
             timer -= dt
             if timer <= 0:
                 game_state["status"] = "loss"
-                res = play_lose_sequence(secret_word, game_state)
-                if res == "restart":
-                    game_state, secret_word, timer = initialize_game()
-                    continue
+                result = play_lose_sequence(screen, fonts, secret_word, game_state)
+                if result == "restart":
+                    game_state, secret_word, timer, hints_left, hints_used = initialize_game()
+                elif result == "main_menu":
+                    return "main_menu"
+                elif result == "quit":
+                    return None
 
         if game_state["status"] == "won":
-            final_score = play_win_sequence(game_state)
-            while game_state["status"] == "won":
-                m_pos = pygame.mouse.get_pos()
-                screen.blit(img_bg, (0, 0))
-                overlay = pygame.Surface((constants.WIDTH, constants.HEIGHT), pygame.SRCALPHA)
-                overlay.fill(constants.BLACK_OVERLAY)
-                screen.blit(overlay, (0, 0))
-
-                win_text = language_manager.get_text("hard_win")
-                msg = fonts["word"].render(win_text, True, constants.GREEN)
-                msg_score = fonts["info"].render(f"SCORE: {final_score}", True, constants.GOLD)
-                msg2 = fonts["info"].render(f"{secret_word}", True, constants.WHITE)
-                
-                screen.blit(msg, msg.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 - 80)))
-                screen.blit(msg_score, msg_score.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 - 20)))
-                screen.blit(msg2, msg2.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 + 40)))
-
-                retry_t = language_manager.get_text("hard_retry")
-                quit_t = language_manager.get_text("hard_quit")
-
-                for r, label in [(rect_retry_win, retry_t), (rect_quit_win, quit_t)]:
-                    pygame_utils.draw_button_with_border(
-                        screen, r, constants.DARK_BLUE, constants.DARK_BLUE_HOVER,
-                        m_pos, label, fonts["button"]
-                    )
-
-                pygame.display.flip()
-
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        pygame.quit()
-                        sys.exit()
-                    if event.type == pygame.MOUSEBUTTONDOWN:
-                        if rect_retry_win.collidepoint(event.pos):
-                            pygame_utils.play_click_sound()
-                            game_state, secret_word, timer = initialize_game()
-                        if rect_quit_win.collidepoint(event.pos):
-                            pygame_utils.play_click_sound()
-                            return_to_main_menu()
+            result = play_win_sequence(screen, fonts, secret_word, game_state, timer, hints_used)
+            if result == "restart":
+                game_state, secret_word, timer, hints_left, hints_used = initialize_game()
+            elif result == "main_menu":
+                return "main_menu"
+            elif result == "quit":
+                return None
             continue
 
         if game_state["status"] == "in_progress":
-            draw_interface(game_state, secret_word, timer, mouse_pos)
+            draw_interface(screen, fonts, game_state, secret_word, timer, hints_left, hints_used, mouse_pos)
 
             if paused:
                 overlay = pygame.Surface((constants.WIDTH, constants.HEIGHT), pygame.SRCALPHA)
@@ -454,4 +468,11 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    pygame.init()
+    pygame.mixer.init()
+    screen = pygame.display.set_mode((constants.WIDTH, constants.HEIGHT))
+    fonts = pygame_utils.create_fonts()
+    pygame_utils.load_sounds()
+    clock = pygame.time.Clock()
+    run_view(screen, fonts, clock)
+    pygame.quit()

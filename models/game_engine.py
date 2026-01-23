@@ -1,5 +1,5 @@
 # Create a new game state dictionary
-def create_game(secret_word: str, max_errors: int = 6) -> dict:
+def create_game(secret_word: str, max_errors: int = 7) -> dict:
     game_state = {
         "secret_word": secret_word.upper(),
         "max_errors": max_errors,

@@ -59,10 +59,9 @@ def initialize_game():
     pygame.mixer.music.stop()
     pygame.mixer.stop()
 
-    normal_audio = os.path.join("assets", "audios", "normal.ogg")
-    if os.path.exists(normal_audio):
+    if os.path.exists(constants.AUDIO_NORMAL_MODE):
         try:
-            pygame.mixer.music.load(normal_audio)
+            pygame.mixer.music.load(constants.AUDIO_NORMAL_MODE)
             pygame.mixer.music.play(-1, start=5.0)
         except Exception as e:
             print(f"Audio error normal.ogg: {e}")
@@ -195,7 +194,7 @@ def play_win_sequence(screen, fonts, secret_word, state, time_remaining, hints_u
 def play_lose_sequence(screen, fonts, secret_word, state):
     """Play the loss sequence with macron.mp4 and macron.ogg (12s to 17s)."""
     pygame.mixer.music.stop()
-    video_path = os.path.join("assets", "video", "macron.mp4")
+    video_path = constants.VIDEO_LOSE_NORMAL
     audio_path = os.path.join("assets", "audios", "macron.ogg")
 
     cap = cv2.VideoCapture(video_path)
@@ -390,10 +389,9 @@ def run_view(screen, fonts, clock):
             elif result == "quit":
                 return None
 
-        if not paused:
-            draw_interface(screen, fonts, game_state, secret_word, timer, hints_left, hints_used, mouse_pos)
-        else:
-            draw_interface(screen, fonts, game_state, secret_word, timer, hints_left, hints_used, mouse_pos)
+        draw_interface(screen, fonts, game_state, secret_word, timer, hints_left, hints_used, mouse_pos)
+
+        if paused:
             overlay = pygame.Surface((constants.WIDTH, constants.HEIGHT), pygame.SRCALPHA)
             overlay.fill(constants.BLACK_OVERLAY)
             screen.blit(overlay, (0, 0))

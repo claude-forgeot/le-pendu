@@ -122,16 +122,6 @@ key=Valeur en francais
 key=English value
 ```
 
-## Contributing
-
-See [CLAUDE.md](CLAUDE.md) for coding standards and project conventions.
-
-Key rules:
-- Procedural style only (no classes)
-- Beginner-level Python concepts
-- English code/comments, localized UI text
-- TXT format for all data files
-
 ## License
 
 This project is for educational purposes as part of the Bachelor program at La Plateforme.

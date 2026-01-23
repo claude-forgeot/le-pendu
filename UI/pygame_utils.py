@@ -1,7 +1,5 @@
 import pygame
-import sys
 import os
-import subprocess
 
 from UI import constants
 
@@ -59,18 +57,6 @@ def load_sounds():
 def play_click_sound():
     if _sound_click:
         _sound_click.play()
-
-
-# Stop audio, quit pygame, and launch main menu
-def return_to_menu():
-    play_click_sound()
-    pygame.mixer.music.stop()
-    pygame.mixer.stop()
-    pygame.quit()
-
-    menu_path = os.path.join(constants.BASE_DIR, "UI", "graphic_view.py")
-    subprocess.Popen([sys.executable, menu_path])
-    sys.exit()
 
 
 # Draw a rounded button with centered text

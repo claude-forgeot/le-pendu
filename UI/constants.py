@@ -57,9 +57,11 @@ AUDIO_MAIN_MENU = os.path.join(AUDIOS_DIR, "main.ogg")
 AUDIO_HARD_MODE = os.path.join(AUDIOS_DIR, "difficile.ogg")
 AUDIO_CLICK = os.path.join(AUDIOS_DIR, "click.ogg")
 AUDIO_LOSE_HARD = os.path.join(AUDIOS_DIR, "losehard.ogg")
+AUDIO_NORMAL_MODE = os.path.join(AUDIOS_DIR, "normal.ogg")
 
-# Video paths (note: folder may be named "vidéo" with accent)
+# Video paths (folder is "vidéo" with accent)
 VIDEO_LOSE_HARD = os.path.join(ASSETS_DIR, "vidéo", "losehard.mp4")
+VIDEO_LOSE_NORMAL = os.path.join(ASSETS_DIR, "vidéo", "macron.mp4")
 
 # Sprite size for hangman parts
 HANGMAN_SPRITE_SIZE = 100

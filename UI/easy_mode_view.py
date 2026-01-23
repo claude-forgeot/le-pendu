@@ -1,6 +1,6 @@
 """
 Easy mode view for the Hangman game.
-Features: 7 max errors, 3 fake hints, Large BLACK Vector Hangman,
+Features: 7 max errors, 3 real hints (reveals a correct letter), Large BLACK Vector Hangman,
 7s delay on victory audio before showing menu.
 """
 
@@ -104,13 +104,14 @@ def return_to_main_menu():
     subprocess.Popen([sys.executable, main_path if os.path.exists(main_path) else "main.py"])
     sys.exit()
 
-def use_fake_hint(state, secret):
-    alphabet = list(string.ascii_lowercase)
+def reveal_correct_letter(state, secret):
+    """Reveals a letter that IS in the word but not yet played."""
     word_letters = set(secret.lower())
     played_letters = set(state["letters_played"])
-    available_fakes = [l for l in alphabet if l not in word_letters and l not in played_letters]
-    if available_fakes:
-        letter = random.choice(available_fakes)
+    remaining_letters = list(word_letters - played_letters)
+    
+    if remaining_letters:
+        letter = random.choice(remaining_letters)
         game_engine.play_letter(state, letter)
         return True
     return False
@@ -223,18 +224,25 @@ def main():
                     if rect_reset.collidepoint(event.pos):
                         pygame_utils.play_click_sound(); game_state, secret_word, hints = initialize_game(); paused = False
                     if rect_quit.collidepoint(event.pos): pygame_utils.play_click_sound(); return_to_main_menu()
+                
                 if not paused:
                     dist = ((event.pos[0]-HINT_CENTER[0])**2 + (event.pos[1]-HINT_CENTER[1])**2)**0.5
                     if dist < HINT_RADIUS and hints > 0 and game_state["status"] == "in_progress":
                         pygame_utils.play_click_sound()
-                        if use_fake_hint(game_state, secret_word): hints -= 1
+                        # On décrémente l'indice AVANT de potentiellement gagner
+                        if reveal_correct_letter(game_state, secret_word): 
+                            hints -= 1
 
             if not paused and event.type == pygame.KEYDOWN and game_state["status"] == "in_progress":
                 letter = event.unicode.lower()
                 if letter.isalpha() and len(letter) == 1 and letter not in game_state["letters_played"]:
                     game_engine.play_letter(game_state, letter)
 
+        # Vérification des conditions de fin de partie
         if game_state["status"] == "won":
+            # On dessine l'interface une dernière fois pour voir la lettre de l'indice
+            draw_interface(game_state, secret_word, hints, mouse_pos)
+            pygame.display.flip()
             if play_win_sequence(secret_word) == "restart": game_state, secret_word, hints = initialize_game()
         elif game_state["status"] == "loss" or game_state["errors"] >= 7:
             if play_lose_sequence(secret_word) == "restart": game_state, secret_word, hints = initialize_game()

@@ -64,7 +64,7 @@ def main():
         title_surf = fonts["word"].render(title_text, True, constants.GOLD)
         screen.blit(title_surf, (constants.WIDTH // 2 - title_surf.get_width() // 2, 50))
 
-        lang_text = "Langue: Francais (JSON)" if current_language == "fr" else "Language: English (TXT)"
+        lang_text = "Langue: Francais (TXT)" if current_language == "fr" else "Language: English (TXT)"
         lang_surf = fonts["button"].render(lang_text, True, constants.WHITE)
         screen.blit(lang_surf, (constants.WIDTH // 2 - lang_surf.get_width() // 2, 120))
 

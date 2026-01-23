@@ -116,15 +116,17 @@ def main_gui():
         rect_normal = pygame.Rect(target_x, start_y + spacing, btn_w_base, btn_h_base)
         rect_difficile = pygame.Rect(target_x, start_y + spacing * 2, btn_w_base, btn_h_base)
         rect_infini = pygame.Rect(target_x, start_y + spacing * 3, btn_w_base, btn_h_base)
+        rect_add_word = pygame.Rect(target_x, start_y + spacing * 4, btn_w_base, btn_h_base)
 
         buttons_config = [
-            (rect_facile, "button_facile", constants.GREEN, constants.GREEN_HOVER),
-            (rect_normal, "button_normal", constants.ORANGE, constants.ORANGE_HOVER),
-            (rect_difficile, "button_difficile", constants.RED, constants.RED_HOVER),
-            (rect_infini, "button_infini", constants.DARK_BLUE, constants.DARK_BLUE_HOVER)
+            (rect_facile, "button_facile", constants.GREEN, constants.GREEN_HOVER, "easy_mode_view.py"),
+            (rect_normal, "button_normal", constants.ORANGE, constants.ORANGE_HOVER, "normal_mode_view.py"),
+            (rect_difficile, "button_difficile", constants.RED, constants.RED_HOVER, "hard_mode_view.py"),
+            (rect_infini, "button_infini", constants.DARK_BLUE, constants.DARK_BLUE_HOVER, "infinite_mode_view.py"),
+            (rect_add_word, "button_add_word", constants.PURPLE, constants.PURPLE_HOVER, "add_word_view.py")
         ]
 
-        for r, key, color, hover_c in buttons_config:
+        for r, key, color, hover_c, _ in buttons_config:
             is_hover = r.collidepoint(mouse_pos)
             draw_rect = r.inflate(24, 12) if is_hover else r
             font_size = int(btn_h_base * (0.52 if is_hover else 0.45))
@@ -223,12 +225,12 @@ def main_gui():
                     show_scores = not show_scores
 
                 if not show_scores:
-                    for r, m_path, _, _ in buttons_config:
+                    for r, _, _, _, file_path in buttons_config:
                         if r.collidepoint(event.pos):
                             pygame_utils.play_click_sound()
                             pygame.mixer.music.stop()
                             pygame.quit()
-                            subprocess.Popen([sys.executable, os.path.join(constants.BASE_DIR, "UI", m_path)])
+                            subprocess.Popen([sys.executable, os.path.join(constants.BASE_DIR, "UI", file_path)])
                             sys.exit()
 
         pygame.display.flip()

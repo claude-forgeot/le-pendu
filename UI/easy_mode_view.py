@@ -253,6 +253,12 @@ def main():
     clock = pygame.time.Clock()
     paused = False
 
+    # Pause menu buttons
+    w_b, h_b = 180, 50
+    rect_cont = pygame.Rect(constants.WIDTH // 2 - 280, constants.HEIGHT // 2 + 20, w_b, h_b)
+    rect_reset = pygame.Rect(constants.WIDTH // 2 - 90, constants.HEIGHT // 2 + 20, w_b, h_b)
+    rect_quit = pygame.Rect(constants.WIDTH // 2 + 100, constants.HEIGHT // 2 + 20, w_b, h_b)
+
     while True:
         clock.tick(60)
         mouse_pos = pygame.mouse.get_pos()
@@ -266,7 +272,19 @@ def main():
                 if btn_pause_rect.collidepoint(event.pos):
                     pygame_utils.play_click_sound()
                     paused = not paused
-                
+                elif paused:
+                    # Pause menu button clicks
+                    if rect_cont.collidepoint(event.pos):
+                        pygame_utils.play_click_sound()
+                        paused = False
+                    if rect_reset.collidepoint(event.pos):
+                        pygame_utils.play_click_sound()
+                        game_state, secret_word, hints = initialize_game()
+                        paused = False
+                    if rect_quit.collidepoint(event.pos):
+                        pygame_utils.play_click_sound()
+                        return_to_main_menu()
+
                 # Click sur Indice (Lettre qui n'est pas dans le mot)
                 dist = ((event.pos[0]-HINT_CENTER[0])**2 + (event.pos[1]-HINT_CENTER[1])**2)**0.5
                 if dist < HINT_RADIUS and not paused and hints > 0 and game_state["status"] == "in_progress":
@@ -291,12 +309,26 @@ def main():
         if not paused:
             draw_interface(game_state, secret_word, hints, mouse_pos)
         else:
-            # Overlay Pause Simple
+            # Draw game interface behind overlay
+            draw_interface(game_state, secret_word, hints, mouse_pos)
+
+            # Overlay with buttons
             overlay = pygame.Surface((constants.WIDTH, constants.HEIGHT), pygame.SRCALPHA)
             overlay.fill((0, 0, 0, 150))
             screen.blit(overlay, (0, 0))
+
+            # Pause title
             txt = fonts["word"].render("PAUSE", True, constants.GOLD)
-            screen.blit(txt, txt.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2)))
+            screen.blit(txt, txt.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 - 60)))
+
+            # Buttons
+            cont_label = "CONTINUER"
+            reset_label = "RECOMMENCER"
+            quit_label = "QUITTER"
+
+            pygame_utils.draw_button_with_border(screen, rect_cont, constants.DARK_BLUE, constants.DARK_BLUE_HOVER, mouse_pos, cont_label, fonts["button"])
+            pygame_utils.draw_button_with_border(screen, rect_reset, constants.DARK_BLUE, constants.DARK_BLUE_HOVER, mouse_pos, reset_label, fonts["button"])
+            pygame_utils.draw_button_with_border(screen, rect_quit, constants.DARK_BLUE, constants.DARK_BLUE_HOVER, mouse_pos, quit_label, fonts["button"])
 
         pygame.display.flip()
 

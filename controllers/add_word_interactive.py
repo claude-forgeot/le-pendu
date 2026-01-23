@@ -2,8 +2,13 @@
 
 """
 Interactive script to add words to the game.
-Run with: python3 add_word_interactive.py
+Run with: python3 -m controllers.add_word_interactive
 """
+
+import os
+import sys
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils import word_manager
 
@@ -14,7 +19,7 @@ def main():
     while True:
         print("Choose language:")
         print("1. English (stored in TXT)")
-        print("2. French (stored in JSON)")
+        print("2. French (stored in TXT)")
         print("3. Quit")
         print("")
 

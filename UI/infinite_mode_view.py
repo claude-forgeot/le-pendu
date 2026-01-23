@@ -168,6 +168,12 @@ def main():
     clock = pygame.time.Clock()
     paused = False
 
+    # Pause menu buttons
+    w_b, h_b = 180, 50
+    rect_cont = pygame.Rect(constants.WIDTH // 2 - 280, constants.HEIGHT // 2 + 20, w_b, h_b)
+    rect_reset = pygame.Rect(constants.WIDTH // 2 - 90, constants.HEIGHT // 2 + 20, w_b, h_b)
+    rect_quit = pygame.Rect(constants.WIDTH // 2 + 100, constants.HEIGHT // 2 + 20, w_b, h_b)
+
     while True:
         clock.tick(60)
         mouse_pos = pygame.mouse.get_pos()
@@ -180,6 +186,17 @@ def main():
                 if btn_pause_rect.collidepoint(event.pos):
                     pygame_utils.play_click_sound()
                     paused = not paused
+                elif paused:
+                    if rect_cont.collidepoint(event.pos):
+                        pygame_utils.play_click_sound()
+                        paused = False
+                    if rect_reset.collidepoint(event.pos):
+                        pygame_utils.play_click_sound()
+                        game_state, secret_word = initialize_game()
+                        paused = False
+                    if rect_quit.collidepoint(event.pos):
+                        pygame_utils.play_click_sound()
+                        return_to_main_menu()
 
             if not paused and event.type == pygame.KEYDOWN and game_state["status"] == "in_progress":
                 letter = event.unicode.lower()
@@ -202,7 +219,11 @@ def main():
             overlay.fill((0, 0, 0, 150))
             screen.blit(overlay, (0, 0))
             txt = fonts["word"].render("PAUSE", True, constants.GOLD)
-            screen.blit(txt, txt.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2)))
+            screen.blit(txt, txt.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 - 40)))
+
+            pygame_utils.draw_button_with_border(screen, rect_cont, constants.GREEN, constants.GREEN_HOVER, mouse_pos, "CONTINUER", fonts["button"])
+            pygame_utils.draw_button_with_border(screen, rect_reset, constants.ORANGE, constants.ORANGE_HOVER, mouse_pos, "RECOMMENCER", fonts["button"])
+            pygame_utils.draw_button_with_border(screen, rect_quit, constants.RED, constants.RED_HOVER, mouse_pos, "QUITTER", fonts["button"])
 
         pygame.display.flip()
 

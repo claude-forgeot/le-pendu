@@ -2,6 +2,8 @@
 
 This document defines the coding standards and conventions for the Hangman (Le Pendu) project.
 
+Project uses Pygame for graphical interface only (no CLI).
+
 ## CRITICAL RULE: No Decorations
 
 NEVER add decorative elements to code, comments, or output unless explicitly requested by the user:
@@ -27,6 +29,59 @@ Code and comments must be written in English. Only UI-facing text should be in F
 - All code comments and docstrings: English
 - All log messages and debug output: English
 - User interface text (displayed to users): French (for localization)
+
+## CRITICAL RULE: Beginner-Level Python Only
+
+Use only basic Python concepts that are taught at beginner level:
+- Variables and basic data types (str, int, float, bool)
+- Lists and dictionaries
+- Loops (for, while)
+- Conditionals (if/elif/else)
+- Functions (def)
+- File I/O with open()
+- try/except for error handling
+- Basic imports (os, sys, random)
+- `__main__` and `__init__.py` basics
+
+**AVOID these advanced concepts:**
+- Classes and OOP (see No Classes rule)
+- List comprehensions (use regular for loops instead)
+- Lambda functions
+- Decorators
+- Generators (yield)
+- Type annotations (: str, -> int, etc.)
+- Advanced modules unless necessary (cv2 and subprocess are exceptions for video/navigation)
+
+## CRITICAL RULE: Data Storage Format
+
+All data must be stored in TXT format only (NO JSON anywhere):
+- English words: `data/words_en.txt`
+- French words: `data/words_fr.txt`
+- UI translations: `data/locales.txt`
+
+TXT file format for words:
+```
+[facile]
+word1
+word2
+
+[moyen]
+word3
+word4
+
+[difficile]
+word5
+word6
+```
+
+TXT file format for locales:
+```
+[fr]
+key=value
+
+[en]
+key=value
+```
 
 ## General Principles
 

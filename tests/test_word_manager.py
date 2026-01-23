@@ -125,14 +125,14 @@ def test_load_words_from_txt():
         print("ERROR - test_load_words_from_txt: TXT loading failed")
 
 
-def test_load_words_from_json():
-    """Test that French words are loaded from JSON format."""
+def test_load_words_french_txt():
+    """Test that French words are loaded from TXT format."""
     words = word_manager.load_words("fr")
 
     if "facile" in words and len(words["facile"]) > 0:
-        print("OK - test_load_words_from_json")
+        print("OK - test_load_words_french_txt")
     else:
-        print("ERROR - test_load_words_from_json: JSON loading failed")
+        print("ERROR - test_load_words_french_txt: TXT loading failed")
 
 
 def test_add_word_validation():
@@ -162,7 +162,7 @@ test_get_word_french_facile()
 test_get_word_invalid_language()
 test_get_word_invalid_difficulty()
 test_load_words_from_txt()
-test_load_words_from_json()
+test_load_words_french_txt()
 test_add_word_validation()
 
 print("")

@@ -9,4 +9,3 @@ python3 tests/run_all_tests.py
 ```
 
 ## Documentation
-

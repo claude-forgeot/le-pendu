@@ -1,7 +1,10 @@
-# Hangman (Le Pendu) Project Dependencies
+# Le Pendu (Hangman) - Dependencies
+# Install with: pip install -r requirements.txt
 
-# Pygame - Used for graphical user interface (all UI views)
-pygame>=2.5.0
+# Pygame Community Edition - Graphics, audio, and input handling
+# Used for: All UI views, sound effects, music playback
+pygame-ce>=2.5.0
 
-# OpenCV - Used for image processing in game mode views
+# OpenCV Python - Computer vision and video processing
+# Used for: Video playback in win/lose sequences (hard mode)
 opencv-python>=4.8.0

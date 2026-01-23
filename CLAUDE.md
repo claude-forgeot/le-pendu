@@ -4,37 +4,74 @@ This document defines the coding standards and conventions for the Hangman (Le P
 
 Project uses Pygame for graphical interface only (no CLI).
 
-## Project Structure
+## Project Structure Snapshot
+
+Last verified: 2025-01-23
 
 ```
 le-pendu/
     main.py                 # Entry point - calls UI.main_gui()
+    requirements.txt        # Dependencies (pygame-ce, opencv-python)
+    README.md               # Project documentation
+    CLAUDE.md               # This file - coding standards
+    convert_audio_to_ogg.sh # Utility script for audio conversion
     UI/
         __init__.py
         graphic_view.py     # Main controller and view manager
         constants.py        # Shared constants (colors, paths, sizes)
         pygame_utils.py     # Helper functions for pygame
-        easy_mode_view.py   # Easy mode game view
-        normal_mode_view.py # Normal mode game view
-        hard_mode_view.py   # Hard mode game view
+        easy_mode_view.py   # Easy mode game view (7 lives)
+        normal_mode_view.py # Normal mode game view (7 lives)
+        hard_mode_view.py   # Hard mode game view (5 lives)
         infinite_mode_view.py # Infinite mode game view
         add_word_view.py    # Add word form view
     models/
+        __init__.py
         game_engine.py      # Core game logic
     utils/
+        __init__.py
         word_manager.py     # Word loading and management
         language_manager.py # Localization
-        score_manager.py    # Score tracking
+        score_manager.py    # Score tracking (TXT format)
     data/
         words_fr.txt        # French words by difficulty
         words_en.txt        # English words by difficulty
         locales.txt         # UI translations
+        highscores.txt      # Persisted high scores by category
     assets/
         images/             # Background images, hangman sprites
-        audios/             # Music and sound effects (OGG format)
+        audios/             # Music and sound effects (OGG preferred, some MP3)
+        video/              # Video files for loss sequences (MP4)
     tests/
-        test_game_engine.py # Unit tests
+        __init__.py
+        run_all_tests.py    # Test runner
+        test_game_engine.py
+        test_word_manager.py
+        test_language_manager.py
+        test_word_addition.py
+    logs/
+        .gitkeep            # Directory placeholder
 ```
+
+### Verification Checklist
+
+Before making changes, verify the codebase matches this structure:
+- NO `controllers/` folder (CLI tools removed - game is Pygame only)
+- NO `UI/base_view.py` (empty file removed)
+- NO `UI/addword_mode_view.py` (duplicate removed - use add_word_view.py)
+- NO `highscores.json` at root (use data/highscores.txt)
+- NO duplicate MP3 files when OGG equivalent exists
+
+### Audio Files
+
+OGG files (preferred format):
+- main.ogg, facile.ogg, difficile.ogg, victoire.ogg
+- macron.ogg, winhard.ogg, losehard.ogg
+
+MP3 files (no OGG equivalent):
+- infinite.mp3, lose_infinite.mp3, normal.mp3
+
+Known issue: normal_mode_view.py references normal.ogg but only normal.mp3 exists
 
 ## Dependencies
 
@@ -64,11 +101,11 @@ NEVER use object-oriented programming with classes. Use procedural programming s
 
 ## CRITICAL RULE: Language Requirements
 
-Code and comments must be written in English. Only UI-facing text should be in French:
+Code and comments must be written in English. UI-facing text must be localized:
 - All variable names, function names, and identifiers: English
 - All code comments and docstrings: English
 - All log messages and debug output: English
-- User interface text (displayed to users): French (for localization)
+- User interface text (displayed to users): Use `language_manager.get_text()` for localization
 
 ## CRITICAL RULE: Beginner-Level Python Only
 
@@ -122,6 +159,70 @@ key=value
 [en]
 key=value
 ```
+
+## Localization System
+
+The game supports French and English. Language selection in the main menu affects the entire application.
+
+### Language Manager Usage
+
+All UI text must use the localization system via [utils/language_manager.py](utils/language_manager.py):
+
+```python
+from utils import language_manager
+
+# Get localized text
+title = language_manager.get_text("victory")
+button_label = language_manager.get_text("retry")
+
+# Get current language
+current_lang = language_manager.get_current_language()  # Returns "fr" or "en"
+
+# Set language (called from main menu)
+language_manager.set_language("en")
+```
+
+### Adding New Locale Keys
+
+When adding new UI text, add keys to both language sections in `data/locales.txt`:
+
+```
+[fr]
+my_new_key=Mon texte en francais
+
+[en]
+my_new_key=My English text
+```
+
+### Word Dictionary Integration
+
+Words are loaded from the dictionary matching the current language:
+- French: `data/words_fr.txt`
+- English: `data/words_en.txt`
+
+```python
+from utils import word_manager
+from utils import language_manager
+
+# Get word from correct dictionary based on current language
+current_lang = language_manager.get_current_language()
+word = word_manager.get_word(current_lang, "facile")
+
+# Add word to correct dictionary
+word_manager.add_word(current_lang, "newword", "moyen")
+```
+
+### Common Locale Keys
+
+Available keys in `data/locales.txt`:
+- `victory`, `game_over`, `word_was` - Game result messages
+- `pause`, `continue`, `restart`, `quit`, `menu` - Pause menu buttons
+- `retry`, `replay` - End screen buttons
+- `hint`, `letters_used` - Game interface labels
+- `new_record`, `press_enter` - Highscore input
+- `add_word_title`, `add_word_button`, `add_word_back` - Add word view
+- `button_facile`, `button_normal`, `button_difficile`, `button_infini` - Main menu buttons
+- `difficulty_facile`, `difficulty_moyen`, `difficulty_difficile` - Difficulty labels
 
 ## General Principles
 
@@ -595,7 +696,7 @@ except pygame.error as e:
     print(f"Could not load audio: {e}")
 ```
 
-Audio files must be in OGG format (not MP3) for SDL_mixer compatibility.
+Audio files should be in OGG format for SDL_mixer compatibility. Exception: infinite.mp3, lose_infinite.mp3, normal.mp3 (no OGG versions exist).
 
 ### Helper Functions
 
@@ -619,14 +720,17 @@ See these files for reference implementations:
 - Difficulty selection with visual feedback
 - Hover effects on all interactive elements
 - Back button returning "main_menu"
+- Full localization with `language_manager.get_text()`
 
 **[UI/easy_mode_view.py](UI/easy_mode_view.py)** - Game mode view:
 - Module-level resource loading
 - Game loop with pause functionality
-- Win/lose sequences
+- Win/lose sequences with localized messages
 - Hint system
+- Localized button labels and game text
 
 **[UI/graphic_view.py](UI/graphic_view.py)** - Main controller:
 - Single pygame initialization
 - View manager pattern
 - View routing based on return values
+- Language selection (flag buttons)

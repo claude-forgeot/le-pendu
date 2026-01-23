@@ -24,6 +24,8 @@ imgs = {}
 
 # Pause button rect
 btn_pause_rect = pygame.Rect(20, 20, 120, 40)
+HINT_CENTER = (constants.WIDTH - 80, constants.HEIGHT - 80)
+HINT_RADIUS = 40
 
 
 def load_resources():
@@ -72,8 +74,27 @@ def initialize_game():
 
     game_state = game_engine.create_game(secret_word, 7)
     timer = 30.0
+    hints_left = 2
+    hints_used = 0
 
-    return game_state, secret_word, timer
+    return game_state, secret_word, timer, hints_left, hints_used
+
+
+def use_real_hint(state, secret):
+    """Reveals a letter that IS in the word (direct hint)."""
+    word_letters = set(secret.lower())
+    played_letters = set(state["letters_played"])
+
+    available_hints = []
+    for letter in word_letters:
+        if letter not in played_letters:
+            available_hints.append(letter)
+
+    if available_hints:
+        letter = random.choice(available_hints)
+        game_engine.play_letter(state, letter)
+        return True
+    return False
 
 
 def get_name_input(screen, fonts, final_score):
@@ -104,10 +125,10 @@ def get_name_input(screen, fonts, final_score):
                     name += event.unicode.upper()
 
 
-def play_win_sequence(screen, fonts, secret_word, state):
+def play_win_sequence(screen, fonts, secret_word, state, time_remaining, hints_used):
     """Sequence for winning: winnormal.png, score check (Normal), and name input."""
     pygame.mixer.music.stop()
-    final_score = score_manager.calculate_score(state)
+    final_score = score_manager.calculate_score(state, time_remaining, hints_used)
 
     win_bg_path = os.path.join("assets", "images", "winnormal.png")
     current_win_bg = img_bg
@@ -249,12 +270,12 @@ def play_lose_sequence(screen, fonts, secret_word, state):
                     return "main_menu"
 
 
-def draw_interface(screen, fonts, state, secret, timer, mouse_pos):
+def draw_interface(screen, fonts, state, secret, timer, hints_left, hints_used, mouse_pos):
     """Draw the game interface."""
     screen.blit(img_bg, (0, 0))
     pygame_utils.draw_button_with_border(screen, btn_pause_rect, constants.DARK_BLUE, constants.DARK_BLUE_HOVER, mouse_pos, language_manager.get_text("hard_pause"), fonts["button"])
 
-    curr_score = score_manager.calculate_score(state)
+    curr_score = score_manager.calculate_score(state, timer, hints_used)
     surf_score = fonts["info"].render(f"SCORE: {curr_score}", True, constants.WHITE)
     screen.blit(surf_score, (constants.WIDTH - 180, 20))
 
@@ -282,6 +303,16 @@ def draw_interface(screen, fonts, state, secret, timer, mouse_pos):
     screen.blit(fonts["small"].render(f"{errors_text} ({error_count}/7)", True, constants.RED), (20, constants.HEIGHT - 70))
     screen.blit(fonts["small"].render(", ".join(wrong_letters).upper(), True, constants.WHITE), (20, constants.HEIGHT - 40))
 
+    # Hint button
+    dist = ((mouse_pos[0] - HINT_CENTER[0]) ** 2 + (mouse_pos[1] - HINT_CENTER[1]) ** 2) ** 0.5
+    color = constants.GOLD if dist < HINT_RADIUS else constants.DARK_BLUE
+    pygame.draw.circle(screen, color, HINT_CENTER, HINT_RADIUS)
+    pygame.draw.circle(screen, constants.WHITE, HINT_CENTER, HINT_RADIUS, 2)
+
+    hint_label = language_manager.get_text("hint")
+    txt_hint = fonts["small"].render(hint_label + " (" + str(hints_left) + ")", True, constants.WHITE)
+    screen.blit(txt_hint, txt_hint.get_rect(center=HINT_CENTER))
+
 
 def run_view(screen, fonts, clock):
     """
@@ -289,7 +320,7 @@ def run_view(screen, fonts, clock):
     Returns the next view name: "main_menu", "quit", etc.
     """
     load_resources()
-    game_state, secret_word, timer = initialize_game()
+    game_state, secret_word, timer, hints_left, hints_used = initialize_game()
     paused = False
 
     w_b, h_b = 180, 50
@@ -312,11 +343,19 @@ def run_view(screen, fonts, clock):
                     if rect_cont.collidepoint(event.pos):
                         paused = False
                     if rect_reset.collidepoint(event.pos):
-                        game_state, secret_word, timer = initialize_game()
+                        game_state, secret_word, timer, hints_left, hints_used = initialize_game()
                         paused = False
                     if rect_quit.collidepoint(event.pos):
                         pygame.mixer.music.stop()
                         return "main_menu"
+
+                # Hint button click
+                dist = ((event.pos[0] - HINT_CENTER[0]) ** 2 + (event.pos[1] - HINT_CENTER[1]) ** 2) ** 0.5
+                if dist < HINT_RADIUS and not paused and hints_left > 0 and game_state["status"] == "in_progress":
+                    pygame_utils.play_click_sound()
+                    if use_real_hint(game_state, secret_word):
+                        hints_left = hints_left - 1
+                        hints_used = hints_used + 1
 
             if not paused and event.type == pygame.KEYDOWN and game_state["status"] == "in_progress":
                 letter = event.unicode.lower()
@@ -334,27 +373,27 @@ def run_view(screen, fonts, clock):
                 game_state["status"] = "loss"
                 result = play_lose_sequence(screen, fonts, secret_word, game_state)
                 if result == "restart":
-                    game_state, secret_word, timer = initialize_game()
+                    game_state, secret_word, timer, hints_left, hints_used = initialize_game()
                 elif result == "main_menu":
                     return "main_menu"
                 elif result == "quit":
                     return None
 
         elif game_state["status"] == "won":
-            draw_interface(screen, fonts, game_state, secret_word, timer, mouse_pos)
+            draw_interface(screen, fonts, game_state, secret_word, timer, hints_left, hints_used, mouse_pos)
             pygame.display.flip()
-            result = play_win_sequence(screen, fonts, secret_word, game_state)
+            result = play_win_sequence(screen, fonts, secret_word, game_state, timer, hints_used)
             if result == "restart":
-                game_state, secret_word, timer = initialize_game()
+                game_state, secret_word, timer, hints_left, hints_used = initialize_game()
             elif result == "main_menu":
                 return "main_menu"
             elif result == "quit":
                 return None
 
         if not paused:
-            draw_interface(screen, fonts, game_state, secret_word, timer, mouse_pos)
+            draw_interface(screen, fonts, game_state, secret_word, timer, hints_left, hints_used, mouse_pos)
         else:
-            draw_interface(screen, fonts, game_state, secret_word, timer, mouse_pos)
+            draw_interface(screen, fonts, game_state, secret_word, timer, hints_left, hints_used, mouse_pos)
             overlay = pygame.Surface((constants.WIDTH, constants.HEIGHT), pygame.SRCALPHA)
             overlay.fill(constants.BLACK_OVERLAY)
             screen.blit(overlay, (0, 0))

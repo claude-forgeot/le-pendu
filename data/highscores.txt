@@ -1,0 +1,9 @@
+[normal]
+MEGA=90
+
+[difficile]
+PROUT=140
+
+[infinite]
+MEGAR=230
+BITE=60

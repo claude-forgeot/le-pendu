@@ -6,7 +6,6 @@ Single window architecture - all views share the same pygame window.
 import pygame
 import sys
 import os
-import json
 
 from UI import constants
 from UI import pygame_utils
@@ -76,7 +75,7 @@ def main_menu_view():
     except pygame.error:
         pass
 
-    path_scores = os.path.join(constants.BASE_DIR, "highscores.json")
+    path_scores = os.path.join(constants.BASE_DIR, "data", "highscores.txt")
     show_rules = False
     show_scores = False
 
@@ -198,8 +197,27 @@ def main_menu_view():
             all_data = {}
             if os.path.exists(path_scores):
                 try:
-                    with open(path_scores, "r") as f:
-                        all_data = json.load(f)
+                    file = open(path_scores, "r", encoding="utf-8")
+                    lines = file.readlines()
+                    file.close()
+                    current_cat = None
+                    for line in lines:
+                        line = line.strip()
+                        if not line:
+                            continue
+                        if line.startswith('[') and line.endswith(']'):
+                            current_cat = line[1:-1]
+                            all_data[current_cat] = []
+                            continue
+                        if current_cat and '=' in line:
+                            pos = line.find('=')
+                            name = line[:pos]
+                            score_str = line[pos + 1:]
+                            try:
+                                score_val = int(score_str)
+                                all_data[current_cat].append({"name": name, "score": score_val})
+                            except:
+                                pass
                 except:
                     pass
 
@@ -239,6 +257,17 @@ def main_menu_view():
                 screen.blit(name_surf, (x_pos + 15, header_y))
                 screen.blit(score_surf, (x_pos + panel_w - score_surf.get_width() - 15, header_y))
                 pygame.draw.line(screen, (255, 255, 255), (x_pos + 10, header_y + 25), (x_pos + panel_w - 10, header_y + 25), 1)
+
+                cat_key = cat_mapping[key]
+                entries = all_data.get(cat_key, [])
+                entry_y = header_y + 35
+                for j in range(min(5, len(entries))):
+                    entry = entries[j]
+                    name_text = entry_font.render(entry["name"], True, (255, 255, 255))
+                    score_text = entry_font.render(str(entry["score"]), True, (255, 255, 255))
+                    screen.blit(name_text, (x_pos + 15, entry_y))
+                    screen.blit(score_text, (x_pos + panel_w - score_text.get_width() - 15, entry_y))
+                    entry_y = entry_y + 30
 
         # Rules popup
         if show_rules:

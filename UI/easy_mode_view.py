@@ -111,10 +111,13 @@ def use_fake_hint(state, secret):
     alphabet = list(string.ascii_lowercase)
     word_letters = set(secret.lower())
     played_letters = set(state["letters_played"])
-    
-    # Lettres qui ne sont ni dans le mot, ni déjà jouées
-    available_fakes = [l for l in alphabet if l not in word_letters and l not in played_letters]
-    
+
+    # Lettres qui ne sont ni dans le mot, ni deja jouees
+    available_fakes = []
+    for l in alphabet:
+        if l not in word_letters and l not in played_letters:
+            available_fakes.append(l)
+
     if available_fakes:
         letter = random.choice(available_fakes)
         game_engine.play_letter(state, letter)

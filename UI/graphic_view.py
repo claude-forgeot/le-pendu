@@ -138,18 +138,28 @@ def main_gui():
             f = pygame.font.SysFont("Arial", font_size, bold=True)
             pygame_utils.draw_rounded_button(screen, hover_c if is_hover else color, draw_rect, language_manager.get_text(key), f)
 
-        # Bouton Scores
+        # --- BOUTONS SCORE ET AJOUTER ---
+        # On calcule les positions pour qu'ils soient côte à côte en bas à droite
         rect_scores = pygame.Rect(win_w - btn_w_base - 40, win_h - btn_h_base - 40, btn_w_base, btn_h_base)
+        rect_add_word = pygame.Rect(win_w - (btn_w_base * 2) - 60, win_h - btn_h_base - 40, btn_w_base, btn_h_base)
+
+        # Bouton Scores
         is_h_scores = rect_scores.collidepoint(mouse_pos)
         d_r_scores = rect_scores.inflate(20, 10) if is_h_scores else rect_scores
         f_s_scores = int(btn_h_base * 0.52) if is_h_scores else int(btn_h_base * 0.45)
-        
         score_btn_text = language_manager.get_text("button_scores") if not show_scores else ("RETOUR" if current_lang=="fr" else "BACK")
         pygame_utils.draw_rounded_button(screen, constants.GOLD_HOVER if is_h_scores else constants.GOLD, d_r_scores, score_btn_text, pygame.font.SysFont("Arial", f_s_scores, bold=True))
 
+        # Bouton Ajouter Mot (Masqué si show_scores est True pour laisser de la place au classement)
+        if not show_scores:
+            is_h_add = rect_add_word.collidepoint(mouse_pos)
+            d_r_add = rect_add_word.inflate(20, 10) if is_h_add else rect_add_word
+            f_s_add = int(btn_h_base * 0.45)
+            add_word_text = "AJOUTER MOT" if current_lang == "fr" else "ADD WORD"
+            pygame_utils.draw_rounded_button(screen, (80, 80, 80) if is_h_add else (120, 120, 120), d_r_add, add_word_text, pygame.font.SysFont("Arial", f_s_add, bold=True))
+
         # --- PANNEAU DES SCORES ---
         if show_scores:
-            # Titre CLASSEMENT Centré en NOIR
             title_font = pygame.font.SysFont("Arial", int(win_h * 0.07), bold=True)
             title_text = "CLASSEMENT" if current_lang == "fr" else "LEADERBOARD"
             title_surf = title_font.render(title_text, True, (0, 0, 0))
@@ -159,7 +169,7 @@ def main_gui():
             panel_area_w = win_w - (panel_margin * 2)
             panel_w = (panel_area_w // 4) - 20
             panel_h = win_h * 0.6
-            panel_y = 130 # Remonté ici
+            panel_y = 130 
 
             difficulty_keys = ["button_facile", "button_normal", "button_difficile", "button_infini"]
             header_font = pygame.font.SysFont("Arial", int(panel_w * 0.10), bold=True)
@@ -168,26 +178,20 @@ def main_gui():
             
             for i, key in enumerate(difficulty_keys):
                 x_pos = panel_margin + i * (panel_w + 20)
-                
-                # Panneau bleu transparent
                 s = pygame.Surface((panel_w, panel_h), pygame.SRCALPHA)
                 s.fill((0, 80, 180, 175)) 
                 screen.blit(s, (x_pos, panel_y))
                 pygame.draw.rect(screen, (255, 255, 255), (x_pos, panel_y, panel_w, panel_h), 2, border_radius=8)
 
-                # Titre difficulté
                 diff_f = pygame.font.SysFont("Arial", int(panel_w * 0.15), bold=True)
                 diff_t = diff_f.render(language_manager.get_text(key), True, (255, 255, 255))
                 screen.blit(diff_t, (x_pos + (panel_w // 2 - diff_t.get_width() // 2), panel_y + 15))
 
-                # En-têtes NOM et SCORE
                 header_y = panel_y + 65
                 name_surf = header_font.render(name_label, True, (255, 235, 59))
                 score_surf = header_font.render(score_label, True, (255, 235, 59))
-                
                 screen.blit(name_surf, (x_pos + 15, header_y))
                 screen.blit(score_surf, (x_pos + panel_w - score_surf.get_width() - 15, header_y))
-                
                 pygame.draw.line(screen, (255, 255, 255), (x_pos + 10, header_y + 25), (x_pos + panel_w - 10, header_y + 25), 1)
 
         # Pop-up des règles
@@ -228,6 +232,14 @@ def main_gui():
                 if rect_scores.collidepoint(event.pos):
                     pygame_utils.play_click_sound()
                     show_scores = not show_scores
+
+                # --- CLIC AJOUTER MOT ---
+                if not show_scores and rect_add_word.collidepoint(event.pos):
+                    pygame_utils.play_click_sound()
+                    pygame.mixer.music.stop()
+                    pygame.quit()
+                    subprocess.Popen([sys.executable, os.path.join(constants.BASE_DIR, "UI", "addword_mode_view.py")])
+                    sys.exit()
 
                 if not show_scores:
                     for r, m_path, _, _ in buttons_config:

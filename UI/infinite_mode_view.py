@@ -3,6 +3,7 @@ Mode Infinite - Hangman
 Features: 5 max errors, multiple small daemon.png display, infinite.png background, 
 infinite.mp3 music, lose_infinite.mp3 on loss, multi-difficulty words.
 No hints, no win screen (auto-restart on word found).
+Score system: Category 'infinite' in JSON.
 """
 
 import pygame
@@ -18,6 +19,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from models import game_engine
 from utils import word_manager
 from utils import language_manager
+from utils import score_manager
 from UI import constants
 from UI import pygame_utils
 
@@ -26,6 +28,7 @@ screen = None
 img_bg = None
 img_daemon = None
 fonts = {}
+current_total_score = 0  # Score cumulé pendant la session infinie
 
 # UI Rects
 btn_pause_rect = pygame.Rect(20, 20, 120, 40)
@@ -62,8 +65,12 @@ def initialize_pygame():
         print(f"Error loading resources: {e}")
         img_bg = pygame.Surface((constants.WIDTH, constants.HEIGHT))
 
-def initialize_game():
+def initialize_game(reset_score=False):
     """Initialize a new game with words from all difficulties."""
+    global current_total_score
+    if reset_score:
+        current_total_score = 0
+
     pygame.mixer.music.stop()
     pygame.mixer.stop()
 
@@ -91,6 +98,30 @@ def initialize_game():
     
     return game_state, secret_word
 
+def get_name_input(final_score):
+    """Saisie du nom pour le Highscore Infinite (5 chars)."""
+    name = ""
+    while True:
+        screen.fill((0, 0, 0))
+        prompt = fonts["info"].render("NOUVEAU RECORD INFINI ! Ton nom :", True, constants.GOLD)
+        name_surf = fonts["word"].render(name + ("_" if (pygame.time.get_ticks() // 500) % 2 == 0 else ""), True, constants.WHITE)
+        instr = fonts["small"].render("Appuie sur ENTREE pour valider (5 chars max)", True, constants.WHITE)
+        
+        screen.blit(prompt, prompt.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 - 50)))
+        screen.blit(name_surf, name_surf.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 + 20)))
+        screen.blit(instr, instr.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 + 80)))
+        
+        pygame.display.flip()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT: pygame.quit(); sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN and len(name) > 0:
+                    score_manager.save_score(name, final_score, category="infinite")
+                    return
+                elif event.key == pygame.K_BACKSPACE: name = name[:-1]
+                elif len(name) < 5 and event.unicode.isalpha():
+                    name += event.unicode.upper()
+
 def return_to_main_menu():
     """Quits and returns to main.py."""
     pygame.mixer.music.stop()
@@ -100,9 +131,14 @@ def return_to_main_menu():
     sys.exit()
 
 def play_lose_sequence(secret_word):
-    """Loss: Overlay noir transparent + lose_infinite.mp3."""
+    """Loss: Highscore check, then Overlay noir transparent + lose_infinite.mp3."""
+    global current_total_score
     pygame.mixer.music.stop()
     
+    # 1. Vérification du Highscore AVANT l'écran de Game Over
+    if score_manager.check_if_highscore(current_total_score, category="infinite"):
+        get_name_input(current_total_score)
+
     loss_audio = os.path.join("assets", "audios", "lose_infinite.mp3")
     if os.path.exists(loss_audio):
         pygame.mixer.music.load(loss_audio)
@@ -121,12 +157,14 @@ def play_lose_sequence(secret_word):
         screen.blit(fade, (0, 0))
 
         t1 = fonts["word"].render("GAME OVER", True, constants.RED)
+        t_score = fonts["info"].render(f"SCORE FINAL : {current_total_score}", True, constants.GOLD)
         t2 = fonts["info"].render(f"Le mot était : {secret_word}", True, constants.WHITE)
-        tip = fonts["small"].render("L'infini vous a consumé...", True, constants.GOLD)
+        tip = fonts["small"].render("L'infini vous a consumé...", True, constants.WHITE)
 
-        screen.blit(t1, t1.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 - 80)))
-        screen.blit(t2, t2.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 - 20)))
-        screen.blit(tip, tip.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 + 40)))
+        screen.blit(t1, t1.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 - 100)))
+        screen.blit(t_score, t_score.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 - 40)))
+        screen.blit(t2, t2.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 + 10)))
+        screen.blit(tip, tip.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 + 60)))
 
         pygame_utils.draw_button_with_border(screen, rect_retry, constants.DARK_BLUE, constants.DARK_BLUE_HOVER, m_pos, "REESSAYER", fonts["button"])
         pygame_utils.draw_button_with_border(screen, rect_back, constants.DARK_BLUE, constants.DARK_BLUE_HOVER, m_pos, "MENU", fonts["button"])
@@ -144,6 +182,10 @@ def draw_interface(state, secret, mouse_pos):
 
     # Pause Button
     pygame_utils.draw_button_with_border(screen, btn_pause_rect, constants.DARK_BLUE, constants.DARK_BLUE_HOVER, mouse_pos, "PAUSE", fonts["button"])
+
+    # Score en haut à droite
+    surf_score = fonts["info"].render(f"SCORE: {current_total_score}", True, constants.WHITE)
+    screen.blit(surf_score, (constants.WIDTH - 180, 20))
 
     # Affichage des Daemons : une copie apparaît par erreur de gauche à droite
     if img_daemon:
@@ -163,8 +205,9 @@ def draw_interface(state, secret, mouse_pos):
     screen.blit(txt_used, (20, constants.HEIGHT - 40))
 
 def main():
+    global current_total_score
     initialize_pygame()
-    game_state, secret_word = initialize_game()
+    game_state, secret_word = initialize_game(reset_score=True)
     clock = pygame.time.Clock()
     paused = False
 
@@ -193,7 +236,7 @@ def main():
                         paused = False
                     if rect_reset.collidepoint(event.pos):
                         pygame_utils.play_click_sound()
-                        game_state, secret_word = initialize_game()
+                        game_state, secret_word = initialize_game(reset_score=True)
                         paused = False
                     if rect_quit.collidepoint(event.pos):
                         pygame_utils.play_click_sound()
@@ -206,12 +249,14 @@ def main():
 
         # Check Win/Loss
         if game_state["status"] == "won":
+            # On ajoute les points du mot trouvé au score total
+            current_total_score += score_manager.calculate_score(game_state)
             # Auto-restart immédiat en mode Infinite
-            game_state, secret_word = initialize_game()
+            game_state, secret_word = initialize_game(reset_score=False)
             
         elif game_state["status"] == "loss" or game_state["errors"] >= 5:
             if play_lose_sequence(secret_word) == "restart":
-                game_state, secret_word = initialize_game()
+                game_state, secret_word = initialize_game(reset_score=True)
 
         # Render
         if not paused:

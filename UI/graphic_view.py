@@ -6,6 +6,7 @@ import pygame
 import sys
 import os
 import subprocess
+import json
 
 from UI import constants
 from UI import pygame_utils
@@ -29,6 +30,7 @@ def main_gui():
     # Chemins des images door et book
     path_door = os.path.join(constants.BASE_DIR, "assets", "images", "door.png")
     path_book = os.path.join(constants.BASE_DIR, "assets", "images", "book.png")
+    path_scores = os.path.join(constants.BASE_DIR, "highscores.json")
 
     try:
         img_background = pygame.image.load(constants.IMG_BACKGROUND_HOME)
@@ -160,19 +162,37 @@ def main_gui():
 
         # --- PANNEAU DES SCORES ---
         if show_scores:
-            title_font = pygame.font.SysFont("Arial", int(win_h * 0.07), bold=True)
-            title_text = "CLASSEMENT" if current_lang == "fr" else "LEADERBOARD"
+            # Taille réduite du titre pour éviter les collisions avec les drapeaux
+            title_font = pygame.font.SysFont("Arial", int(win_h * 0.055), bold=True)
+            title_text = "CLASSEMENT (TOP 5)" if current_lang == "fr" else "LEADERBOARD (TOP 5)"
             title_surf = title_font.render(title_text, True, (0, 0, 0))
-            screen.blit(title_surf, (win_w // 2 - title_surf.get_width() // 2, 40))
+            # Positionnement un peu plus bas pour laisser de l'air en haut
+            screen.blit(title_surf, (win_w // 2 - title_surf.get_width() // 2, 55))
+
+            # Chargement des scores
+            all_data = {}
+            if os.path.exists(path_scores):
+                try:
+                    with open(path_scores, "r") as f:
+                        all_data = json.load(f)
+                except: pass
 
             panel_margin = 40
             panel_area_w = win_w - (panel_margin * 2)
             panel_w = (panel_area_w // 4) - 20
             panel_h = win_h * 0.6
-            panel_y = 130 
+            panel_y = 135 
 
+            # Correspondance entre les clés JSON et les boutons
+            cat_mapping = {
+                "button_facile": "facile",
+                "button_normal": "normal",
+                "button_difficile": "difficile",
+                "button_infini": "infinite"
+            }
             difficulty_keys = ["button_facile", "button_normal", "button_difficile", "button_infini"]
             header_font = pygame.font.SysFont("Arial", int(panel_w * 0.10), bold=True)
+            entry_font = pygame.font.SysFont("Arial", int(panel_w * 0.09), bold=False)
             name_label = "NOM" if current_lang == "fr" else "NAME"
             score_label = "SCORE" if current_lang == "fr" else "SCORE"
             
@@ -194,6 +214,18 @@ def main_gui():
                 screen.blit(score_surf, (x_pos + panel_w - score_surf.get_width() - 15, header_y))
                 pygame.draw.line(screen, (255, 255, 255), (x_pos + 10, header_y + 25), (x_pos + panel_w - 10, header_y + 25), 1)
 
+                # Affichage Top 5
+                json_key = cat_mapping.get(key, "normal")
+                scores_list = all_data.get(json_key, [])
+                top_5 = sorted(scores_list, key=lambda x: x["score"], reverse=True)[:5]
+                
+                for j, entry in enumerate(top_5):
+                    row_y = header_y + 40 + (j * 35)
+                    txt_name = entry_font.render(f"{j+1}. {entry['name']}", True, (255, 255, 255))
+                    txt_val = entry_font.render(str(entry['score']), True, (255, 255, 255))
+                    screen.blit(txt_name, (x_pos + 15, row_y))
+                    screen.blit(txt_val, (x_pos + panel_w - txt_val.get_width() - 15, row_y))
+
         # Pop-up des règles
         if show_rules:
             overlay = pygame.Surface((win_w, win_h), pygame.SRCALPHA)
@@ -207,7 +239,7 @@ def main_gui():
             rules_text = [title, "", intro, "", 
                           "- Facile & Normal : 7 vies" if current_lang == "fr" else "- Easy & Normal: 7 lives",
                           "- Difficile : 5 vies" if current_lang == "fr" else "- Hard: 5 lives",
-                          "- Infini : Illimité" if current_lang == "fr" else "- Infinite: No limit",
+                          "- Infini : 5 vies (Auto-restart)" if current_lang == "fr" else "- Infinite: 5 lives (Auto-restart)",
                           "", "Cliquez pour fermer" if current_lang == "fr" else "Click to close"]
             for i, text in enumerate(rules_text):
                 color, size_factor, is_bold = (211, 47, 47) if i==0 else ((80,80,80) if i==2 else (60,60,60)), (0.08 if i==0 else (0.05 if i==2 else 0.06)), (True if i==0 else False)

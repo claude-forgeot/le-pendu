@@ -1,6 +1,7 @@
 """
 Hard mode view for the Hangman game.
 Features: 30s timer, 5 max errors, video on loss.
+Score system: Category 'hard' in JSON.
 Run with: python -m UI.hard_mode_view [EN]
 """
 
@@ -17,6 +18,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from models import game_engine
 from utils import word_manager
 from utils import language_manager
+from utils import score_manager
 from UI import constants
 from UI import pygame_utils
 
@@ -93,10 +95,34 @@ def return_to_main_menu():
         
     sys.exit()
 
+def get_name_input(final_score):
+    """Saisie du nom pour le Highscore Hard (5 chars)."""
+    name = ""
+    while True:
+        screen.fill((0, 0, 0))
+        prompt = fonts["info"].render("RECORD DIFFICILE ! Entre ton nom :", True, constants.GOLD)
+        name_surf = fonts["word"].render(name + ("_" if (pygame.time.get_ticks() // 500) % 2 == 0 else ""), True, constants.WHITE)
+        instr = fonts["small"].render("Appuie sur ENTREE pour valider (5 chars max)", True, constants.WHITE)
+        
+        screen.blit(prompt, prompt.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 - 50)))
+        screen.blit(name_surf, name_surf.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 + 20)))
+        screen.blit(instr, instr.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 + 80)))
+        
+        pygame.display.flip()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT: pygame.quit(); sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN and len(name) > 0:
+                    score_manager.save_score(name, final_score, category="difficile")
+                    return
+                elif event.key == pygame.K_BACKSPACE: name = name[:-1]
+                elif len(name) < 5 and event.unicode.isalpha():
+                    name += event.unicode.upper()
 
-def play_win_sequence():
+def play_win_sequence(state):
     """Sequence for winning: black fade, winhard image + winhard.mp3 audio, then win screen."""
     pygame.mixer.music.stop()
+    final_score = score_manager.calculate_score(state)
     
     # 1. Fondu au noir
     fade = pygame.Surface((constants.WIDTH, constants.HEIGHT))
@@ -129,6 +155,12 @@ def play_win_sequence():
             pygame.time.delay(100)
     else:
         pygame.time.delay(2000)
+        
+    # 3. Highscore check
+    if score_manager.check_if_highscore(final_score, category="hard"):
+        get_name_input(final_score)
+    
+    return final_score
 
 
 def play_lose_sequence(secret_word, state):
@@ -239,6 +271,11 @@ def draw_interface(state, secret, timer, mouse_pos):
         screen, btn_pause_rect, constants.DARK_BLUE, constants.DARK_BLUE_HOVER,
         mouse_pos, language_manager.get_text("hard_pause"), fonts["button"]
     )
+    
+    # Score Display
+    current_score = score_manager.calculate_score(state)
+    surf_score = fonts["info"].render(f"SCORE: {current_score}", True, constants.WHITE)
+    screen.blit(surf_score, (constants.WIDTH - 180, 20))
 
     timer_val = max(0, int(timer))
     timer_color = constants.RED if timer < 10 else constants.WHITE
@@ -346,7 +383,7 @@ def main():
                     continue
 
         if game_state["status"] == "won":
-            play_win_sequence()
+            final_score = play_win_sequence(game_state)
             while game_state["status"] == "won":
                 m_pos = pygame.mouse.get_pos()
                 screen.blit(img_bg, (0, 0))
@@ -356,9 +393,12 @@ def main():
 
                 win_text = language_manager.get_text("hard_win")
                 msg = fonts["word"].render(win_text, True, constants.GREEN)
+                msg_score = fonts["info"].render(f"SCORE: {final_score}", True, constants.GOLD)
                 msg2 = fonts["info"].render(f"{secret_word}", True, constants.WHITE)
-                screen.blit(msg, msg.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 - 60)))
-                screen.blit(msg2, msg2.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 + 20)))
+                
+                screen.blit(msg, msg.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 - 80)))
+                screen.blit(msg_score, msg_score.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 - 20)))
+                screen.blit(msg2, msg2.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 + 40)))
 
                 retry_t = language_manager.get_text("hard_retry")
                 quit_t = language_manager.get_text("hard_quit")

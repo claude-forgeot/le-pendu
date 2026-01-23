@@ -2,6 +2,7 @@ import pygame
 import sys
 import os
 import subprocess
+import json
 
 from UI import constants
 from UI import pygame_utils
@@ -22,6 +23,7 @@ def main_gui():
     # Chemins des images door et book
     path_door = os.path.join(constants.BASE_DIR, "assets", "images", "door.png")
     path_book = os.path.join(constants.BASE_DIR, "assets", "images", "book.png")
+    path_scores = os.path.join(constants.BASE_DIR, "highscores.json")
 
     try:
         img_background = pygame.image.load(constants.IMG_BACKGROUND_HOME)
@@ -145,10 +147,20 @@ def main_gui():
 
         # Scores panel
         if show_scores:
-            title_font = pygame.font.SysFont("Arial", int(win_h * 0.07), bold=True)
-            title_text = "CLASSEMENT" if current_lang == "fr" else "LEADERBOARD"
+            # Taille réduite du titre pour éviter les collisions avec les drapeaux
+            title_font = pygame.font.SysFont("Arial", int(win_h * 0.055), bold=True)
+            title_text = "CLASSEMENT (TOP 5)" if current_lang == "fr" else "LEADERBOARD (TOP 5)"
             title_surf = title_font.render(title_text, True, (0, 0, 0))
-            screen.blit(title_surf, (win_w // 2 - title_surf.get_width() // 2, 40))
+            # Positionnement un peu plus bas pour laisser de l'air en haut
+            screen.blit(title_surf, (win_w // 2 - title_surf.get_width() // 2, 55))
+
+            # Chargement des scores
+            all_data = {}
+            if os.path.exists(path_scores):
+                try:
+                    with open(path_scores, "r") as f:
+                        all_data = json.load(f)
+                except: pass
 
             panel_margin = 40
             panel_area_w = win_w - (panel_margin * 2)
@@ -156,8 +168,16 @@ def main_gui():
             panel_h = win_h * 0.6
             panel_y = 130
 
+            # Correspondance entre les clés JSON et les boutons
+            cat_mapping = {
+                "button_facile": "facile",
+                "button_normal": "normal",
+                "button_difficile": "difficile",
+                "button_infini": "infinite"
+            }
             difficulty_keys = ["button_facile", "button_normal", "button_difficile", "button_infini"]
             header_font = pygame.font.SysFont("Arial", int(panel_w * 0.10), bold=True)
+            entry_font = pygame.font.SysFont("Arial", int(panel_w * 0.09), bold=False)
             name_label = "NOM" if current_lang == "fr" else "NAME"
             score_label = "SCORE" if current_lang == "fr" else "SCORE"
 

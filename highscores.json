@@ -1,0 +1,30 @@
+{
+    "infinite": [
+        {
+            "name": "MEGAR",
+            "score": 230
+        },
+        {
+            "name": "BITE",
+            "score": 60
+        }
+    ],
+    "facile": [
+        {
+            "name": "PROUT",
+            "score": 100
+        }
+    ],
+    "normal": [
+        {
+            "name": "MEGA",
+            "score": 90
+        }
+    ],
+    "difficile": [
+        {
+            "name": "PROUT",
+            "score": 140
+        }
+    ]
+}

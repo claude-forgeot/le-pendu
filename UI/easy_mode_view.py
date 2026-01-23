@@ -18,6 +18,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from models import game_engine
 from utils import word_manager
 from utils import language_manager
+from utils import score_manager # Ton moteur de score
 from UI import constants
 from UI import pygame_utils
 

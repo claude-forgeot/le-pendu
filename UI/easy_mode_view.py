@@ -21,7 +21,6 @@ from UI import pygame_utils
 
 # Module-level variables for resources
 img_bg = None
-imgs = {}
 
 # UI Rects
 btn_pause_rect = pygame.Rect(20, 20, 120, 40)
@@ -31,7 +30,7 @@ HINT_RADIUS = 40
 
 def load_resources():
     """Load resources for easy mode."""
-    global img_bg, imgs
+    global img_bg
 
     try:
         bg_path = os.path.join("assets", "images", "facile.jpg")
@@ -42,17 +41,9 @@ def load_resources():
             img_bg.fill((100, 149, 237))
 
         img_bg = pygame.transform.scale(img_bg, (constants.WIDTH, constants.HEIGHT))
-
-        imgs = {}
-        for i in range(1, 8):
-            path = os.path.join("assets", "images", f"hangman_{i}.png")
-            if os.path.exists(path):
-                img = pygame.image.load(path).convert_alpha()
-                imgs[i] = pygame.transform.scale(img, (300, 300))
     except Exception as e:
         print(f"Error loading resources: {e}")
         img_bg = pygame.Surface((constants.WIDTH, constants.HEIGHT))
-        imgs = {}
 
 
 def initialize_game():
@@ -94,6 +85,44 @@ def use_fake_hint(state, secret):
         game_engine.play_letter(state, letter)
         return True
     return False
+
+
+def draw_hangman(screen, errors):
+    """Draws a larger and bolder hangman in black using pygame.draw."""
+    color = (0, 0, 0) # Noir
+    # Coordonnées ajustées pour un dessin plus grand
+    bx = constants.WIDTH // 2 - 120
+    by = constants.HEIGHT // 2 - 160
+
+    # Épaisseurs augmentées
+    thick_struct = 8
+    thick_man = 5
+
+    # 1. Socle
+    if errors >= 1:
+        pygame.draw.line(screen, color, (bx - 20, by + 250), (bx + 220, by + 250), thick_struct)
+    # 2. Poteau vertical
+    if errors >= 2:
+        pygame.draw.line(screen, color, (bx + 40, by + 250), (bx + 40, by - 20), thick_struct)
+    # 3. Traverse horizontale et renfort
+    if errors >= 3:
+        pygame.draw.line(screen, color, (bx + 40, by - 20), (bx + 160, by - 20), thick_struct)
+        pygame.draw.line(screen, color, (bx + 40, by + 30), (bx + 90, by - 20), thick_struct)
+    # 4. Corde et Tête
+    if errors >= 4:
+        pygame.draw.line(screen, color, (bx + 160, by - 20), (bx + 160, by + 20), thick_man)
+        pygame.draw.circle(screen, color, (bx + 160, by + 45), 25, thick_man)
+    # 5. Corps (Buste)
+    if errors >= 5:
+        pygame.draw.line(screen, color, (bx + 160, by + 70), (bx + 160, by + 150), thick_man)
+    # 6. Bras
+    if errors >= 6:
+        pygame.draw.line(screen, color, (bx + 160, by + 90), (bx + 120, by + 130), thick_man)
+        pygame.draw.line(screen, color, (bx + 160, by + 90), (bx + 200, by + 130), thick_man)
+    # 7. Jambes
+    if errors >= 7:
+        pygame.draw.line(screen, color, (bx + 160, by + 150), (bx + 120, by + 210), thick_man)
+        pygame.draw.line(screen, color, (bx + 160, by + 150), (bx + 200, by + 210), thick_man)
 
 
 def play_win_sequence(screen, fonts, secret_word):
@@ -192,11 +221,8 @@ def draw_interface(screen, fonts, state, secret, hints, mouse_pos):
 
     pygame_utils.draw_button_with_border(screen, btn_pause_rect, constants.DARK_BLUE, constants.DARK_BLUE_HOVER, mouse_pos, language_manager.get_text("pause"), fonts["button"])
 
-    if state["errors"] > 0:
-        idx = min(state["errors"], 7)
-        if idx in imgs:
-            img_p = imgs[idx]
-            screen.blit(img_p, (constants.WIDTH // 2 - 150, 100))
+    # Remplacement des images par le dessin dynamique
+    draw_hangman(screen, state["errors"])
 
     masked = game_engine.get_masked_word(state)
     surf_mot = fonts["word"].render(" ".join(masked), True, constants.WHITE)
@@ -220,7 +246,6 @@ def draw_interface(screen, fonts, state, secret, hints, mouse_pos):
 def run_view(screen, fonts, clock):
     """
     Main entry point for easy mode view.
-    Returns the next view name: "main_menu", "quit", etc.
     """
     load_resources()
     game_state, secret_word, hints = initialize_game()

@@ -20,7 +20,6 @@ from UI import pygame_utils
 
 # Module-level variables for resources
 img_bg = None
-imgs = {}
 
 # Pause button rect
 btn_pause_rect = pygame.Rect(20, 20, 120, 40)
@@ -30,7 +29,7 @@ HINT_RADIUS = 40
 
 def load_resources():
     """Load resources for normal mode."""
-    global img_bg, imgs
+    global img_bg
 
     try:
         bg_path = os.path.join("assets", "images", "normal.png")
@@ -40,18 +39,10 @@ def load_resources():
             img_bg = pygame.image.load(constants.IMG_BACKGROUND_GAME).convert()
 
         img_bg = pygame.transform.scale(img_bg, (constants.WIDTH, constants.HEIGHT))
-
-        imgs = {}
-        for i in range(1, 8):
-            path = os.path.join("assets", "images", f"hangman_{i}.png")
-            if os.path.exists(path):
-                img = pygame.image.load(path).convert_alpha()
-                imgs[i] = pygame.transform.scale(img, (300, 300))
     except Exception as e:
         print(f"Error loading resources: {e}")
         img_bg = pygame.Surface((constants.WIDTH, constants.HEIGHT))
         img_bg.fill((40, 40, 40))
-        imgs = {}
 
 
 def initialize_game():
@@ -77,6 +68,42 @@ def initialize_game():
     hints_used = 0
 
     return game_state, secret_word, timer, hints_left, hints_used
+
+
+def draw_hangman(screen, errors):
+    """Draws a large and bold hangman in WHITE using pygame.draw."""
+    color = (255, 255, 255) # Blanc
+    bx = constants.WIDTH // 2 - 120
+    by = constants.HEIGHT // 2 - 160
+
+    thick_struct = 8
+    thick_man = 5
+
+    # 1. Socle
+    if errors >= 1:
+        pygame.draw.line(screen, color, (bx - 20, by + 250), (bx + 220, by + 250), thick_struct)
+    # 2. Poteau vertical
+    if errors >= 2:
+        pygame.draw.line(screen, color, (bx + 40, by + 250), (bx + 40, by - 20), thick_struct)
+    # 3. Traverse horizontale et renfort
+    if errors >= 3:
+        pygame.draw.line(screen, color, (bx + 40, by - 20), (bx + 160, by - 20), thick_struct)
+        pygame.draw.line(screen, color, (bx + 40, by + 30), (bx + 90, by - 20), thick_struct)
+    # 4. Corde et Tête
+    if errors >= 4:
+        pygame.draw.line(screen, color, (bx + 160, by - 20), (bx + 160, by + 20), thick_man)
+        pygame.draw.circle(screen, color, (bx + 160, by + 45), 25, thick_man)
+    # 5. Corps
+    if errors >= 5:
+        pygame.draw.line(screen, color, (bx + 160, by + 70), (bx + 160, by + 150), thick_man)
+    # 6. Bras
+    if errors >= 6:
+        pygame.draw.line(screen, color, (bx + 160, by + 90), (bx + 120, by + 130), thick_man)
+        pygame.draw.line(screen, color, (bx + 160, by + 90), (bx + 200, by + 130), thick_man)
+    # 7. Jambes
+    if errors >= 7:
+        pygame.draw.line(screen, color, (bx + 160, by + 150), (bx + 120, by + 210), thick_man)
+        pygame.draw.line(screen, color, (bx + 160, by + 150), (bx + 200, by + 210), thick_man)
 
 
 def use_real_hint(state, secret):
@@ -280,11 +307,8 @@ def draw_interface(screen, fonts, state, secret, timer, hints_left, hints_used, 
     surf_timer = fonts["timer"].render(f"{timer_val}s", True, timer_color)
     screen.blit(surf_timer, surf_timer.get_rect(center=(constants.WIDTH // 2, 50)))
 
-    error_count = state["errors"]
-    if error_count > 0:
-        idx = min(error_count, 7)
-        if idx in imgs:
-            screen.blit(imgs[idx], (constants.WIDTH // 2 - 150, 100))
+    # Nouveau dessin du pendu en BLANC
+    draw_hangman(screen, state["errors"])
 
     masked = game_engine.get_masked_word(state)
     surf_mot = fonts["word"].render(" ".join(masked), True, constants.WHITE)
@@ -296,6 +320,7 @@ def draw_interface(screen, fonts, state, secret, timer, hints_left, hints_used, 
             wrong_letters.append(l)
 
     errors_text = language_manager.get_text("hard_errors")
+    error_count = state["errors"]
     screen.blit(fonts["small"].render(f"{errors_text} ({error_count}/7)", True, constants.RED), (20, constants.HEIGHT - 70))
     screen.blit(fonts["small"].render(", ".join(wrong_letters).upper(), True, constants.WHITE), (20, constants.HEIGHT - 40))
 
@@ -313,7 +338,6 @@ def draw_interface(screen, fonts, state, secret, timer, hints_left, hints_used, 
 def run_view(screen, fonts, clock):
     """
     Main entry point for normal mode view.
-    Returns the next view name: "main_menu", "quit", etc.
     """
     load_resources()
     game_state, secret_word, timer, hints_left, hints_used = initialize_game()
@@ -350,8 +374,8 @@ def run_view(screen, fonts, clock):
                 if dist < HINT_RADIUS and not paused and hints_left > 0 and game_state["status"] == "in_progress":
                     pygame_utils.play_click_sound()
                     if use_real_hint(game_state, secret_word):
-                        hints_left = hints_left - 1
-                        hints_used = hints_used + 1
+                        hints_left -= 1
+                        hints_used += 1
 
             if not paused and event.type == pygame.KEYDOWN and game_state["status"] == "in_progress":
                 letter = event.unicode.lower()

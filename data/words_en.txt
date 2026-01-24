@@ -19,6 +19,7 @@ key
 rock
 road
 time
+goodbye
 
 [moyen]
 guitar
@@ -41,6 +42,7 @@ picture
 morning
 evening
 friend
+worms
 
 [difficile]
 xylophone
@@ -63,3 +65,4 @@ embezzlement
 juxtaposition
 quintessential
 ubiquitous
+

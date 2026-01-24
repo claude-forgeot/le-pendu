@@ -6,46 +6,39 @@ Run with: python -m tests.test_word_manager
 """
 
 from utils import word_manager
+from tests import test_logger
 
 
 def test_load_words_french():
     """Test loading French words file."""
     words = word_manager.load_words("fr")
 
-    if type(words) == dict and len(words) > 0:
-        print("OK - test_load_words_french")
-    else:
-        print("ERROR - test_load_words_french: words should be a non-empty dict")
+    if type(words) != dict or len(words) == 0:
+        raise AssertionError("words should be a non-empty dict")
 
 
 def test_load_words_english():
     """Test loading English words file."""
     words = word_manager.load_words("en")
 
-    if type(words) == dict and len(words) > 0:
-        print("OK - test_load_words_english")
-    else:
-        print("ERROR - test_load_words_english: words should be a non-empty dict")
+    if type(words) != dict or len(words) == 0:
+        raise AssertionError("words should be a non-empty dict")
 
 
 def test_load_words_has_difficulties():
     """Test that loaded words have all difficulty levels."""
     words = word_manager.load_words("fr")
 
-    if "facile" in words and "moyen" in words and "difficile" in words:
-        print("OK - test_load_words_has_difficulties")
-    else:
-        print("ERROR - test_load_words_has_difficulties: missing difficulty levels")
+    if "facile" not in words or "moyen" not in words or "difficile" not in words:
+        raise AssertionError("missing difficulty levels")
 
 
 def test_load_words_invalid_language():
     """Test loading words for a nonexistent language."""
     words = word_manager.load_words("xyz")
 
-    if words == {}:
-        print("OK - test_load_words_invalid_language")
-    else:
-        print("ERROR - test_load_words_invalid_language: should return empty dict")
+    if words != {}:
+        raise AssertionError("should return empty dict")
 
 
 def test_get_random_word_facile():
@@ -57,10 +50,8 @@ def test_get_random_word_facile():
     }
     word = word_manager.get_random_word(test_words, "facile")
 
-    if word in ["CAT", "DOG", "RAT"]:
-        print("OK - test_get_random_word_facile")
-    else:
-        print("ERROR - test_get_random_word_facile: word not in expected list")
+    if word not in ["CAT", "DOG", "RAT"]:
+        raise AssertionError("word not in expected list")
 
 
 def test_get_random_word_invalid_difficulty():
@@ -68,10 +59,8 @@ def test_get_random_word_invalid_difficulty():
     test_words = {"facile": ["CAT"]}
     word = word_manager.get_random_word(test_words, "invalid")
 
-    if word == "":
-        print("OK - test_get_random_word_invalid_difficulty")
-    else:
-        print("ERROR - test_get_random_word_invalid_difficulty: should return empty string")
+    if word != "":
+        raise AssertionError("should return empty string")
 
 
 def test_get_random_word_uppercase():
@@ -79,60 +68,48 @@ def test_get_random_word_uppercase():
     lowercase_words = {"facile": ["cat", "dog"]}
     word = word_manager.get_random_word(lowercase_words, "facile")
 
-    if word.isupper():
-        print("OK - test_get_random_word_uppercase")
-    else:
-        print("ERROR - test_get_random_word_uppercase: word should be uppercase")
+    if not word.isupper():
+        raise AssertionError("word should be uppercase")
 
 
 def test_get_word_french_facile():
     """Test getting a French easy word."""
     word = word_manager.get_word("fr", "facile")
 
-    if type(word) == str and len(word) > 0 and word.isupper():
-        print("OK - test_get_word_french_facile")
-    else:
-        print("ERROR - test_get_word_french_facile: invalid word returned")
+    if type(word) != str or len(word) == 0 or not word.isupper():
+        raise AssertionError("invalid word returned")
 
 
 def test_get_word_invalid_language():
     """Test getting word with invalid language."""
     word = word_manager.get_word("xyz", "facile")
 
-    if word == "":
-        print("OK - test_get_word_invalid_language")
-    else:
-        print("ERROR - test_get_word_invalid_language: should return empty string")
+    if word != "":
+        raise AssertionError("should return empty string")
 
 
 def test_get_word_invalid_difficulty():
     """Test getting word with invalid difficulty."""
     word = word_manager.get_word("fr", "invalid")
 
-    if word == "":
-        print("OK - test_get_word_invalid_difficulty")
-    else:
-        print("ERROR - test_get_word_invalid_difficulty: should return empty string")
+    if word != "":
+        raise AssertionError("should return empty string")
 
 
 def test_load_words_from_txt():
     """Test that English words are loaded from TXT format."""
     words = word_manager.load_words("en")
 
-    if "facile" in words and len(words["facile"]) > 0:
-        print("OK - test_load_words_from_txt")
-    else:
-        print("ERROR - test_load_words_from_txt: TXT loading failed")
+    if "facile" not in words or len(words["facile"]) == 0:
+        raise AssertionError("TXT loading failed")
 
 
 def test_load_words_french_txt():
     """Test that French words are loaded from TXT format."""
     words = word_manager.load_words("fr")
 
-    if "facile" in words and len(words["facile"]) > 0:
-        print("OK - test_load_words_french_txt")
-    else:
-        print("ERROR - test_load_words_french_txt: TXT loading failed")
+    if "facile" not in words or len(words["facile"]) == 0:
+        raise AssertionError("TXT loading failed")
 
 
 def test_add_word_validation():
@@ -141,29 +118,47 @@ def test_add_word_validation():
     result2 = word_manager.add_word("fr", "test", "invalid_difficulty")
     result3 = word_manager.add_word("xyz", "test", "facile")
 
-    if not result1 and not result2 and not result3:
-        print("OK - test_add_word_validation")
-    else:
-        print("ERROR - test_add_word_validation: should reject invalid inputs")
+    if result1 or result2 or result3:
+        raise AssertionError("should reject invalid inputs")
 
 
-# Run all tests
-print("Word Manager Tests")
-print("")
+def run_all_tests():
+    """Run all word manager tests."""
+    tests = [
+        test_load_words_french,
+        test_load_words_english,
+        test_load_words_has_difficulties,
+        test_load_words_invalid_language,
+        test_get_random_word_facile,
+        test_get_random_word_invalid_difficulty,
+        test_get_random_word_uppercase,
+        test_get_word_french_facile,
+        test_get_word_invalid_language,
+        test_get_word_invalid_difficulty,
+        test_load_words_from_txt,
+        test_load_words_french_txt,
+        test_add_word_validation,
+    ]
 
-test_load_words_french()
-test_load_words_english()
-test_load_words_has_difficulties()
-test_load_words_invalid_language()
-test_get_random_word_facile()
-test_get_random_word_invalid_difficulty()
-test_get_random_word_uppercase()
-test_get_word_french_facile()
-test_get_word_invalid_language()
-test_get_word_invalid_difficulty()
-test_load_words_from_txt()
-test_load_words_french_txt()
-test_add_word_validation()
+    test_logger.log_header("Word Manager Tests")
 
-print("")
-print("Tests finished")
+    passed = 0
+    failed = 0
+
+    for test in tests:
+        try:
+            test()
+            passed += 1
+            test_logger.log_result(test.__name__, True)
+        except AssertionError as e:
+            failed += 1
+            test_logger.log_result(test.__name__, False, str(e))
+
+    test_logger.log_summary("Word Manager Tests", passed, failed)
+    return failed == 0
+
+
+if __name__ == '__main__':
+    test_logger.clear()
+    run_all_tests()
+    test_logger.save()

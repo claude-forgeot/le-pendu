@@ -6,6 +6,7 @@ Run with: python -m tests.test_game_engine
 """
 
 from models import game_engine
+from tests import test_logger
 
 
 def assert_equal(actual, expected, test_name):
@@ -277,6 +278,8 @@ def run_all_tests():
         test_losing_game_flow,
     ]
 
+    test_logger.log_header("Game Engine Tests")
+
     passed = 0
     failed = 0
 
@@ -284,14 +287,16 @@ def run_all_tests():
         try:
             test()
             passed += 1
-            print(f"✓ {test.__name__}")
+            test_logger.log_result(test.__name__, True)
         except AssertionError as e:
             failed += 1
-            print(f"✗ {test.__name__}: {e}")
+            test_logger.log_result(test.__name__, False, str(e))
 
-    print(f"\nGame Engine Tests: {passed} passed, {failed} failed")
+    test_logger.log_summary("Game Engine Tests", passed, failed)
     return failed == 0
 
 
 if __name__ == '__main__':
+    test_logger.clear()
     run_all_tests()
+    test_logger.save()

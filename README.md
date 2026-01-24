@@ -2,8 +2,6 @@
 
 A classic Hangman game built with Pygame, featuring multiple game modes, bilingual support, and a highscore system.
 
-**Academic Project** - Bachelor 1st Year - La Plateforme
-
 ## Features
 
 - **4 Game Modes**
@@ -122,10 +120,3 @@ key=Valeur en francais
 key=English value
 ```
 
-## License
-
-This project is for educational purposes as part of the Bachelor program at La Plateforme.
-
-## Authors
-
-Bachelor 1st Year Students - La Plateforme, Marseille

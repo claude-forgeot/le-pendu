@@ -1,8 +1,4 @@
-"""
-Normal mode view for the Hangman game.
-Features: 30s timer, 7 max errors, macron video (12s-17s) on loss.
-Win: winnormal.png background, 7s delay on victory audio, Score & Highscore (Normal Category).
-"""
+# Normal mode: 30s timer, 7 errors, video on loss, score tracking
 
 import pygame
 import sys
@@ -20,7 +16,6 @@ from UI import pygame_utils
 
 # Module-level variables for resources
 img_bg = None
-imgs = {}
 
 # Pause button rect
 btn_pause_rect = pygame.Rect(20, 20, 120, 40)
@@ -28,9 +23,9 @@ HINT_CENTER = (constants.WIDTH - 80, constants.HEIGHT - 80)
 HINT_RADIUS = 40
 
 
+# Load and scale background image for normal mode
 def load_resources():
-    """Load resources for normal mode."""
-    global img_bg, imgs
+    global img_bg
 
     try:
         bg_path = os.path.join("assets", "images", "normal.png")
@@ -40,22 +35,14 @@ def load_resources():
             img_bg = pygame.image.load(constants.IMG_BACKGROUND_GAME).convert()
 
         img_bg = pygame.transform.scale(img_bg, (constants.WIDTH, constants.HEIGHT))
-
-        imgs = {}
-        for i in range(1, 8):
-            path = os.path.join("assets", "images", f"hangman_{i}.png")
-            if os.path.exists(path):
-                img = pygame.image.load(path).convert_alpha()
-                imgs[i] = pygame.transform.scale(img, (300, 300))
     except Exception as e:
         print(f"Error loading resources: {e}")
         img_bg = pygame.Surface((constants.WIDTH, constants.HEIGHT))
         img_bg.fill((40, 40, 40))
-        imgs = {}
 
 
+# Reset game state with moyen word, 30s timer, 2 hints
 def initialize_game():
-    """Initialize a new game with a random word."""
     pygame.mixer.music.stop()
     pygame.mixer.stop()
 
@@ -79,8 +66,8 @@ def initialize_game():
     return game_state, secret_word, timer, hints_left, hints_used
 
 
+# Play a random unguessed letter that IS in the word
 def use_real_hint(state, secret):
-    """Reveals a letter that IS in the word (direct hint)."""
     word_letters = set(secret.lower())
     played_letters = set(state["letters_played"])
 
@@ -96,8 +83,8 @@ def use_real_hint(state, secret):
     return False
 
 
+# Capture 5-char player name for highscore entry, save to normal category
 def get_name_input(screen, fonts, final_score):
-    """Name input for Highscore (5 chars)."""
     name = ""
     while True:
         screen.fill((0, 0, 0))
@@ -124,8 +111,8 @@ def get_name_input(screen, fonts, final_score):
                     name += event.unicode.upper()
 
 
+# Display win screen, calculate score, check highscore, show retry/quit
 def play_win_sequence(screen, fonts, secret_word, state, time_remaining, hints_used):
-    """Sequence for winning: winnormal.png, score check (Normal), and name input."""
     pygame.mixer.music.stop()
     final_score = score_manager.calculate_score(state, time_remaining, hints_used)
 
@@ -147,12 +134,7 @@ def play_win_sequence(screen, fonts, secret_word, state, time_remaining, hints_u
         pygame.display.flip()
         pygame.time.delay(10)
 
-    start_wait = pygame.time.get_ticks()
-    while pygame.time.get_ticks() - start_wait < 7000:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return "quit"
-        pygame.time.delay(100)
+    pygame.time.delay(7000)
 
     if score_manager.check_if_highscore(final_score, category="normal"):
         result = get_name_input(screen, fonts, final_score)
@@ -190,8 +172,8 @@ def play_win_sequence(screen, fonts, secret_word, state, time_remaining, hints_u
                     return "main_menu"
 
 
+# Play macron video (12s-17s) with audio, then show game over screen
 def play_lose_sequence(screen, fonts, secret_word, state):
-    """Play the loss sequence with macron.mp4 and macron.ogg (12s to 17s)."""
     pygame.mixer.music.stop()
     video_path = constants.VIDEO_LOSE_NORMAL
     cap = cv2.VideoCapture(video_path)
@@ -266,8 +248,8 @@ def play_lose_sequence(screen, fonts, secret_word, state):
                     return "main_menu"
 
 
+# Render background, timer, score, hangman, masked word, errors and hint button
 def draw_interface(screen, fonts, state, secret, timer, hints_left, hints_used, mouse_pos):
-    """Draw the game interface."""
     screen.blit(img_bg, (0, 0))
     pygame_utils.draw_button_with_border(screen, btn_pause_rect, constants.DARK_BLUE, constants.DARK_BLUE_HOVER, mouse_pos, language_manager.get_text("hard_pause"), fonts["button"])
 
@@ -280,14 +262,10 @@ def draw_interface(screen, fonts, state, secret, timer, hints_left, hints_used, 
     surf_timer = fonts["timer"].render(f"{timer_val}s", True, timer_color)
     screen.blit(surf_timer, surf_timer.get_rect(center=(constants.WIDTH // 2, 50)))
 
-    error_count = state["errors"]
-    if error_count > 0:
-        idx = min(error_count, 7)
-        if idx in imgs:
-            screen.blit(imgs[idx], (constants.WIDTH // 2 - 150, 100))
+    pygame_utils.draw_hangman(screen, state["errors"], constants.WIDTH // 2 - 100, 80)
 
     masked = game_engine.get_masked_word(state)
-    surf_mot = fonts["word"].render(" ".join(masked), True, constants.WHITE)
+    surf_mot = pygame_utils.render_word_adaptive(masked, constants.WIDTH - 40)
     screen.blit(surf_mot, (constants.WIDTH // 2 - surf_mot.get_width() // 2, constants.HEIGHT - 180))
 
     wrong_letters = []
@@ -296,7 +274,7 @@ def draw_interface(screen, fonts, state, secret, timer, hints_left, hints_used, 
             wrong_letters.append(l)
 
     errors_text = language_manager.get_text("hard_errors")
-    screen.blit(fonts["small"].render(f"{errors_text} ({error_count}/7)", True, constants.RED), (20, constants.HEIGHT - 70))
+    screen.blit(fonts["small"].render(f"{errors_text} ({state['errors']}/7)", True, constants.RED), (20, constants.HEIGHT - 70))
     screen.blit(fonts["small"].render(", ".join(wrong_letters).upper(), True, constants.WHITE), (20, constants.HEIGHT - 40))
 
     # Hint button
@@ -310,11 +288,8 @@ def draw_interface(screen, fonts, state, secret, timer, hints_left, hints_used, 
     screen.blit(txt_hint, txt_hint.get_rect(center=HINT_CENTER))
 
 
+# Main game loop with timer countdown, state updates and rendering
 def run_view(screen, fonts, clock):
-    """
-    Main entry point for normal mode view.
-    Returns the next view name: "main_menu", "quit", etc.
-    """
     load_resources()
     game_state, secret_word, timer, hints_left, hints_used = initialize_game()
     paused = False
@@ -363,21 +338,14 @@ def run_view(screen, fonts, clock):
                     else:
                         timer -= 5
 
+        # Timer countdown when in progress
         if game_state["status"] == "in_progress" and not paused:
             timer -= dt
             if timer <= 0 or game_state["errors"] >= 7:
                 game_state["status"] = "loss"
-                result = play_lose_sequence(screen, fonts, secret_word, game_state)
-                if result == "restart":
-                    game_state, secret_word, timer, hints_left, hints_used = initialize_game()
-                elif result == "main_menu":
-                    return "main_menu"
-                elif result == "quit":
-                    return None
 
-        elif game_state["status"] == "won":
-            draw_interface(screen, fonts, game_state, secret_word, timer, hints_left, hints_used, mouse_pos)
-            pygame.display.flip()
+        # Handle win
+        if game_state["status"] == "won":
             result = play_win_sequence(screen, fonts, secret_word, game_state, timer, hints_used)
             if result == "restart":
                 game_state, secret_word, timer, hints_left, hints_used = initialize_game()
@@ -386,12 +354,27 @@ def run_view(screen, fonts, clock):
             elif result == "quit":
                 return None
 
-        draw_interface(screen, fonts, game_state, secret_word, timer, hints_left, hints_used, mouse_pos)
+        # Handle loss
+        elif game_state["status"] == "loss" or game_state["status"] == "lost":
+            result = play_lose_sequence(screen, fonts, secret_word, game_state)
+            if result == "restart":
+                game_state, secret_word, timer, hints_left, hints_used = initialize_game()
+            elif result == "main_menu":
+                return "main_menu"
+            elif result == "quit":
+                return None
 
-        if paused:
+        # Draw interface
+        if not paused:
+            draw_interface(screen, fonts, game_state, secret_word, timer, hints_left, hints_used, mouse_pos)
+        else:
+            draw_interface(screen, fonts, game_state, secret_word, timer, hints_left, hints_used, mouse_pos)
             overlay = pygame.Surface((constants.WIDTH, constants.HEIGHT), pygame.SRCALPHA)
             overlay.fill(constants.BLACK_OVERLAY)
             screen.blit(overlay, (0, 0))
+
+            txt = fonts["word"].render(language_manager.get_text("hard_pause"), True, constants.GOLD)
+            screen.blit(txt, txt.get_rect(center=(constants.WIDTH // 2, constants.HEIGHT // 2 - 40)))
 
             for r, lbl in [(rect_cont, "hard_continue"), (rect_reset, "hard_reset"), (rect_quit, "hard_quit")]:
                 pygame_utils.draw_button_with_border(screen, r, constants.DARK_BLUE, constants.DARK_BLUE_HOVER, mouse_pos, language_manager.get_text(lbl), fonts["button"])

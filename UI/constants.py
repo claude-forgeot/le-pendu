@@ -1,9 +1,4 @@
-# UI/constants.py
-
-"""
-Shared constants for the Hangman game UI.
-Contains colors, dimensions, and resource paths.
-"""
+# Shared constants: colors, dimensions, and asset paths for the game UI
 
 import os
 
@@ -33,6 +28,9 @@ GOLD_HOVER = (244, 208, 63)
 BLACK_OVERLAY = (0, 0, 0, 180)
 
 # Resource paths
+# os.path.abspath(__file__) = absolute path to this file (constants.py)
+# os.path.dirname() = parent folder, called twice to go from UI/ to project root
+# os.path.join() = builds paths with correct separator (/ on Linux, \ on Windows)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASSETS_DIR = os.path.join(BASE_DIR, "assets")
 IMAGES_DIR = os.path.join(ASSETS_DIR, "images")

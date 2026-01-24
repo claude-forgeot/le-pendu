@@ -1,8 +1,4 @@
-"""
-Hard mode view for the Hangman game.
-Features: 30s timer, 5 max errors, video on loss.
-Score system: Category 'hard' in JSON.
-"""
+# Hard mode: 30s timer, 5 errors, video on loss, difficile category scores
 
 import pygame
 import sys
@@ -30,8 +26,8 @@ HINT_CENTER = (constants.WIDTH - 80, constants.HEIGHT - 80)
 HINT_RADIUS = 40
 
 
+# Load background and hangman sprite images for hard mode
 def load_resources():
-    """Load resources for hard mode."""
     global img_bg, imgs
 
     try:
@@ -45,8 +41,8 @@ def load_resources():
         imgs = {}
 
 
+# Reset game state with difficile word, 30s timer, 1 hint, 5 max errors
 def initialize_game():
-    """Initialize a new game with a random word."""
     pygame.mixer.music.stop()
     pygame.mixer.stop()
 
@@ -67,8 +63,8 @@ def initialize_game():
     return game_state, secret_word, timer, hints_left, hints_used
 
 
+# Play a random unguessed letter that IS in the word
 def use_real_hint(state, secret):
-    """Reveals a letter that IS in the word (direct hint)."""
     word_letters = set(secret.lower())
     played_letters = set(state["letters_played"])
 
@@ -84,8 +80,8 @@ def use_real_hint(state, secret):
     return False
 
 
+# Capture 5-char player name for highscore entry, save to difficile category
 def get_name_input(screen, fonts, final_score):
-    """Name input for Highscore Hard (5 chars)."""
     name = ""
     while True:
         screen.fill((0, 0, 0))
@@ -112,8 +108,8 @@ def get_name_input(screen, fonts, final_score):
                     name += event.unicode.upper()
 
 
+# Display win screen with fade, winhard image/audio, check highscore
 def play_win_sequence(screen, fonts, secret_word, state, time_remaining, hints_used):
-    """Sequence for winning: black fade, winhard image + winhard.ogg audio, then win screen."""
     pygame.mixer.music.stop()
     final_score = score_manager.calculate_score(state, time_remaining, hints_used)
 
@@ -190,8 +186,8 @@ def play_win_sequence(screen, fonts, secret_word, state, time_remaining, hints_u
                     return "main_menu"
 
 
+# Play losehard video (12s-43s) with audio, then show game over screen
 def play_lose_sequence(screen, fonts, secret_word, state):
-    """Play the loss sequence with video and audio losehard.ogg starting at 12s."""
     pygame.mixer.music.stop()
 
     video_path = constants.VIDEO_LOSE_HARD
@@ -242,8 +238,11 @@ def play_lose_sequence(screen, fonts, secret_word, state):
                 alpha -= 5
 
             pygame.display.flip()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    cap.release()
+                    return "quit"
             clock_local.tick(fps)
-            pygame.event.pump()
 
         cap.release()
 
@@ -289,8 +288,8 @@ def play_lose_sequence(screen, fonts, secret_word, state):
                     return "main_menu"
 
 
+# Render background, timer with shake, score, sprites, masked word, errors
 def draw_interface(screen, fonts, state, secret, timer, hints_left, hints_used, mouse_pos):
-    """Draw the game interface."""
     screen.blit(img_bg, (0, 0))
 
     pygame_utils.draw_button_with_border(
@@ -325,7 +324,7 @@ def draw_interface(screen, fonts, state, secret, timer, hints_left, hints_used, 
             screen.blit(imgs[i], pos[i])
 
     masked = game_engine.get_masked_word(state)
-    surf_mot = fonts["word"].render(" ".join(masked), True, constants.WHITE)
+    surf_mot = pygame_utils.render_word_adaptive(masked, constants.WIDTH - 40)
     screen.blit(surf_mot, (constants.WIDTH // 2 - surf_mot.get_width() // 2, constants.HEIGHT - 180))
 
     wrong_letters = []
@@ -348,11 +347,8 @@ def draw_interface(screen, fonts, state, secret, timer, hints_left, hints_used, 
     screen.blit(txt_hint, txt_hint.get_rect(center=HINT_CENTER))
 
 
+# Main game loop with timer countdown, state updates and rendering
 def run_view(screen, fonts, clock):
-    """
-    Main entry point for hard mode view.
-    Returns the next view name: "main_menu", "quit", etc.
-    """
     load_resources()
     game_state, secret_word, timer, hints_left, hints_used = initialize_game()
     paused = False

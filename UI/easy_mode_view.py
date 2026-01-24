@@ -1,8 +1,4 @@
-"""
-Easy mode view for the Hangman game.
-Features: 7 max errors, 3 fake hints (letters NOT in word), letters used display,
-7s delay on victory audio before showing menu.
-"""
+# Easy mode: 7 max errors, 3 fake hints, 7s victory audio delay
 
 import pygame
 import sys
@@ -21,7 +17,6 @@ from UI import pygame_utils
 
 # Module-level variables for resources
 img_bg = None
-imgs = {}
 
 # UI Rects
 btn_pause_rect = pygame.Rect(20, 20, 120, 40)
@@ -29,9 +24,9 @@ HINT_CENTER = (constants.WIDTH - 80, constants.HEIGHT - 80)
 HINT_RADIUS = 40
 
 
+# Load and scale background image for easy mode
 def load_resources():
-    """Load resources for easy mode."""
-    global img_bg, imgs
+    global img_bg
 
     try:
         bg_path = os.path.join("assets", "images", "facile.jpg")
@@ -42,21 +37,13 @@ def load_resources():
             img_bg.fill((100, 149, 237))
 
         img_bg = pygame.transform.scale(img_bg, (constants.WIDTH, constants.HEIGHT))
-
-        imgs = {}
-        for i in range(1, 8):
-            path = os.path.join("assets", "images", f"hangman_{i}.png")
-            if os.path.exists(path):
-                img = pygame.image.load(path).convert_alpha()
-                imgs[i] = pygame.transform.scale(img, (300, 300))
     except Exception as e:
         print(f"Error loading resources: {e}")
         img_bg = pygame.Surface((constants.WIDTH, constants.HEIGHT))
-        imgs = {}
 
 
+# Reset game state with new word, start music, set 3 hints
 def initialize_game():
-    """Initialize a new game."""
     pygame.mixer.music.stop()
     pygame.mixer.stop()
 
@@ -78,8 +65,8 @@ def initialize_game():
     return game_state, secret_word, hints_left
 
 
+# Play a random letter NOT in the word to help by elimination
 def use_fake_hint(state, secret):
-    """Reveals a letter that is NOT in the word (helps by elimination)."""
     alphabet = list(string.ascii_lowercase)
     word_letters = set(secret.lower())
     played_letters = set(state["letters_played"])
@@ -96,8 +83,8 @@ def use_fake_hint(state, secret):
     return False
 
 
+# Display win screen with fade, victory audio, 7s delay, then retry/quit buttons
 def play_win_sequence(screen, fonts, secret_word):
-    """Win: Fade black, background penduewin.jpg, wait 7s of victoire.ogg."""
     pygame.mixer.music.stop()
 
     win_bg_path = os.path.join("assets", "images", "penduewin.jpg")
@@ -148,8 +135,8 @@ def play_win_sequence(screen, fonts, secret_word):
                     return "main_menu"
 
 
+# Display game over screen with dark overlay, reveal word, show tip
 def play_lose_sequence(screen, fonts, secret_word):
-    """Loss: Black fade, original bg visible, Game Over + Tip."""
     pygame.mixer.music.stop()
     fade = pygame.Surface((constants.WIDTH, constants.HEIGHT))
     fade.fill((0, 0, 0))
@@ -186,20 +173,16 @@ def play_lose_sequence(screen, fonts, secret_word):
                     return "main_menu"
 
 
+# Render background, hangman, masked word, letters used and hint button
 def draw_interface(screen, fonts, state, secret, hints, mouse_pos):
-    """Draw game UI."""
     screen.blit(img_bg, (0, 0))
 
     pygame_utils.draw_button_with_border(screen, btn_pause_rect, constants.DARK_BLUE, constants.DARK_BLUE_HOVER, mouse_pos, language_manager.get_text("pause"), fonts["button"])
 
-    if state["errors"] > 0:
-        idx = min(state["errors"], 7)
-        if idx in imgs:
-            img_p = imgs[idx]
-            screen.blit(img_p, (constants.WIDTH // 2 - 150, 100))
+    pygame_utils.draw_hangman(screen, state["errors"], constants.WIDTH // 2 - 100, 80)
 
     masked = game_engine.get_masked_word(state)
-    surf_mot = fonts["word"].render(" ".join(masked), True, constants.WHITE)
+    surf_mot = pygame_utils.render_word_adaptive(masked, constants.WIDTH - 40)
     screen.blit(surf_mot, (constants.WIDTH // 2 - surf_mot.get_width() // 2, constants.HEIGHT - 200))
 
     used_letters = ", ".join(state["letters_played"]).upper()
@@ -217,11 +200,8 @@ def draw_interface(screen, fonts, state, secret, hints, mouse_pos):
     screen.blit(txt_hint, txt_hint.get_rect(center=HINT_CENTER))
 
 
+# Main game loop handling events, state updates and rendering
 def run_view(screen, fonts, clock):
-    """
-    Main entry point for easy mode view.
-    Returns the next view name: "main_menu", "quit", etc.
-    """
     load_resources()
     game_state, secret_word, hints = initialize_game()
     paused = False

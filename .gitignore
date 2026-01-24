@@ -67,5 +67,13 @@ GixE8sKi - project-the-hanging-man(1).json
 convert_audio_to_ogg.sh
 data/README_WORDS.md
 README_WORDS.md
-convert_audio_to_ogg.shCLAUDE.md
+convert_audio_to_ogg.sh
+CLAUDE.md
 CODE_OVERVIEW.md
+~$*.pptx
+diagramme_*.png
+diagramme_*.svg
+screenshot_*.png
+
+# Presentation Resources (all files)
+RessourcesPrez/

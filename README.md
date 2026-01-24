@@ -80,12 +80,15 @@ le-pendu/
 ## Running Tests
 
 ```bash
-python tests/run_all_tests.py
+python -m tests.run_all_tests
 ```
 
-Or run individual test files:
+Or run individual test modules:
 ```bash
-python -m pytest tests/test_game_engine.py
+python -m tests.test_game_engine
+python -m tests.test_word_manager
+python -m tests.test_language_manager
+python -m tests.test_score_manager
 ```
 
 ## Technologies

@@ -38,6 +38,66 @@ def load_hangman_images(size=None):
     return images
 
 
+# Draw gallows and body parts progressively based on error count (0-7)
+def draw_hangman(surface, errors, x, y, color=None):
+    if color is None:
+        color = constants.WHITE
+
+    line_width = 4
+    head_radius = 25
+    body_length = 80
+    arm_length = 50
+    leg_length = 60
+
+    # Gallows position
+    base_x = x + 50
+    base_y = y + 250
+    pole_height = 200
+    beam_length = 100
+    rope_length = 30
+
+    # Always draw the gallows (base, pole, beam)
+    pygame.draw.line(surface, color, (base_x - 40, base_y), (base_x + 40, base_y), line_width)
+    pygame.draw.line(surface, color, (base_x, base_y), (base_x, base_y - pole_height), line_width)
+    pygame.draw.line(surface, color, (base_x, base_y - pole_height), (base_x + beam_length, base_y - pole_height), line_width)
+
+    # Person position
+    head_x = base_x + beam_length
+    rope_top = base_y - pole_height
+    head_y = rope_top + rope_length + head_radius
+    body_top = head_y + head_radius
+    body_bottom = body_top + body_length
+    arm_y = body_top + 20
+
+    # Error 1: Head
+    if errors >= 1:
+        pygame.draw.circle(surface, color, (head_x, head_y), head_radius, line_width)
+
+    # Error 2: Body
+    if errors >= 2:
+        pygame.draw.line(surface, color, (head_x, body_top), (head_x, body_bottom), line_width)
+
+    # Error 3: Left arm
+    if errors >= 3:
+        pygame.draw.line(surface, color, (head_x, arm_y), (head_x - arm_length, arm_y + 30), line_width)
+
+    # Error 4: Right arm
+    if errors >= 4:
+        pygame.draw.line(surface, color, (head_x, arm_y), (head_x + arm_length, arm_y + 30), line_width)
+
+    # Error 5: Left leg
+    if errors >= 5:
+        pygame.draw.line(surface, color, (head_x, body_bottom), (head_x - 30, body_bottom + leg_length), line_width)
+
+    # Error 6: Right leg
+    if errors >= 6:
+        pygame.draw.line(surface, color, (head_x, body_bottom), (head_x + 30, body_bottom + leg_length), line_width)
+
+    # Error 7: Rope (final - person is hanged)
+    if errors >= 7:
+        pygame.draw.line(surface, color, (head_x, rope_top), (head_x, head_y - head_radius), line_width)
+
+
 # Load sound effects (placeholder for future sounds)
 def load_sounds():
     pass
@@ -57,6 +117,25 @@ def draw_rounded_button(surface, color, rect, text, font, text_color=None):
     text_surf = font.render(text, True, text_color)
     text_rect = text_surf.get_rect(center=rect.center)
     surface.blit(text_surf, text_rect)
+
+
+# Render masked word with adaptive font size to fit screen width
+def render_word_adaptive(masked_word, max_width, color=None):
+    if color is None:
+        color = constants.WHITE
+
+    spaced_word = " ".join(masked_word)
+    font_size = 60
+
+    while font_size > 20:
+        font = pygame.font.SysFont("Arial", font_size, bold=True)
+        surf = font.render(spaced_word, True, color)
+        if surf.get_width() <= max_width:
+            return surf
+        font_size -= 5
+
+    font = pygame.font.SysFont("Arial", 20, bold=True)
+    return font.render(spaced_word, True, color)
 
 
 # Draw a button with border and hover effect

@@ -1,10 +1,4 @@
-"""
-Mode Infinite - Hangman
-Features: 5 max errors, multiple small daemon.png display, infinite.png background,
-infinite.mp3 music, lose_infinite.mp3 on loss, multi-difficulty words.
-No hints, no win screen (auto-restart on word found).
-Score system: Category 'infinite' in JSON.
-"""
+# Infinite mode: 5 errors, daemon sprites, cumulative score, auto-restart on win
 
 import pygame
 import sys
@@ -29,8 +23,8 @@ current_total_score = 0
 btn_pause_rect = pygame.Rect(20, 20, 120, 40)
 
 
+# Load infinite background and daemon sprite images
 def load_resources():
-    """Load resources for infinite mode."""
     global img_bg, img_daemon
 
     try:
@@ -51,8 +45,8 @@ def load_resources():
         img_bg = pygame.Surface((constants.WIDTH, constants.HEIGHT))
 
 
+# Reset game state with random difficulty word, optionally reset cumulative score
 def initialize_game(reset_score=False):
-    """Initialize a new game with words from all difficulties."""
     global current_total_score
     if reset_score:
         current_total_score = 0
@@ -81,8 +75,8 @@ def initialize_game(reset_score=False):
     return game_state, secret_word
 
 
+# Capture 5-char player name for highscore entry, save to infinite category
 def get_name_input(screen, fonts, final_score):
-    """Name input for Highscore Infinite (5 chars)."""
     name = ""
     while True:
         screen.fill((0, 0, 0))
@@ -109,8 +103,8 @@ def get_name_input(screen, fonts, final_score):
                     name += event.unicode.upper()
 
 
+# Display game over with total score, check highscore, show retry/menu buttons
 def play_lose_sequence(screen, fonts, secret_word):
-    """Loss: Black transparent overlay + lose_infinite.mp3."""
     global current_total_score
     pygame.mixer.music.stop()
 
@@ -161,8 +155,8 @@ def play_lose_sequence(screen, fonts, secret_word):
                     return "main_menu"
 
 
+# Render background, score, daemon sprites for errors, masked word and letters
 def draw_interface(screen, fonts, state, secret, mouse_pos):
-    """Draw game UI."""
     global current_total_score
     screen.blit(img_bg, (0, 0))
 
@@ -178,7 +172,7 @@ def draw_interface(screen, fonts, state, secret, mouse_pos):
             screen.blit(img_daemon, (start_x + (i * spacing), 150))
 
     masked = game_engine.get_masked_word(state)
-    surf_mot = fonts["word"].render(" ".join(masked), True, constants.WHITE)
+    surf_mot = pygame_utils.render_word_adaptive(masked, constants.WIDTH - 40)
     screen.blit(surf_mot, (constants.WIDTH // 2 - surf_mot.get_width() // 2, constants.HEIGHT - 200))
 
     used_letters = ", ".join(state["letters_played"]).upper()
@@ -187,11 +181,8 @@ def draw_interface(screen, fonts, state, secret, mouse_pos):
     screen.blit(txt_used, (20, constants.HEIGHT - 40))
 
 
+# Main game loop with auto-restart on win, cumulative scoring
 def run_view(screen, fonts, clock):
-    """
-    Main entry point for infinite mode view.
-    Returns the next view name: "main_menu", "quit", etc.
-    """
     global current_total_score
     load_resources()
     game_state, secret_word = initialize_game(reset_score=True)

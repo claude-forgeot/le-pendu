@@ -1,34 +1,29 @@
-# tests/test_score_manager.py
-
-"""
-Unit tests for the score_manager module.
-Run with: python -m tests.test_score_manager
-"""
+# Tests for score_manager module: calculate_score, check_if_highscore
 
 from utils import score_manager
 from tests import test_logger
 
 
+# Raise AssertionError if actual != expected
 def assert_equal(actual, expected, test_name):
-    """Helper function to assert equality."""
     if actual != expected:
         raise AssertionError(f"Expected {expected}, got {actual}")
 
 
+# Raise AssertionError if value is not True
 def assert_true(value, test_name):
-    """Helper function to assert true."""
     if not value:
         raise AssertionError(f"Expected True, got {value}")
 
 
+# Raise AssertionError if value is not False
 def assert_false(value, test_name):
-    """Helper function to assert false."""
     if value:
         raise AssertionError(f"Expected False, got {value}")
 
 
+# Verify score formula with correct and wrong letters
 def test_calculate_score_basic():
-    """Test basic score calculation with correct and wrong letters."""
     state = {
         "secret_word": "cat",
         "letters_played": ["c", "a", "t", "x", "z"]
@@ -40,8 +35,8 @@ def test_calculate_score_basic():
     assert_equal(score, 40, "test_calculate_score_basic")
 
 
+# Verify time_remaining bonus adds +2 per second
 def test_calculate_score_with_time_bonus():
-    """Test score calculation with time remaining bonus."""
     state = {
         "secret_word": "cat",
         "letters_played": ["c", "a", "t"]
@@ -53,8 +48,8 @@ def test_calculate_score_with_time_bonus():
     assert_equal(score, 80, "test_calculate_score_with_time_bonus")
 
 
+# Verify hints_used penalty subtracts -20 per hint
 def test_calculate_score_with_hints():
-    """Test score calculation with hint penalty."""
     state = {
         "secret_word": "cat",
         "letters_played": ["c", "a", "t"]
@@ -66,8 +61,8 @@ def test_calculate_score_with_hints():
     assert_equal(score, 20, "test_calculate_score_with_hints")
 
 
+# Verify negative scores are clamped to zero
 def test_calculate_score_minimum_zero():
-    """Test that score cannot go below zero."""
     state = {
         "secret_word": "cat",
         "letters_played": ["x", "y", "z", "w", "q", "r", "s"]
@@ -78,8 +73,8 @@ def test_calculate_score_minimum_zero():
     assert_equal(score, 0, "test_calculate_score_minimum_zero")
 
 
+# Verify empty letters_played returns zero score
 def test_calculate_score_empty_game():
-    """Test score calculation with no letters played."""
     state = {
         "secret_word": "cat",
         "letters_played": []
@@ -88,8 +83,8 @@ def test_calculate_score_empty_game():
     assert_equal(score, 0, "test_calculate_score_empty_game")
 
 
+# Verify score works with set type for letters_played
 def test_calculate_score_with_set():
-    """Test that duplicate letters in played are handled correctly."""
     state = {
         "secret_word": "hello",
         "letters_played": {"h", "e", "l", "o"}
@@ -99,8 +94,8 @@ def test_calculate_score_with_set():
     assert_equal(score, 80, "test_calculate_score_with_set")
 
 
+# Verify full formula with correct, wrong, time and hints
 def test_calculate_score_combined():
-    """Test score calculation with all factors combined."""
     state = {
         "secret_word": "python",
         "letters_played": ["p", "y", "t", "h", "o", "n", "x", "z"]
@@ -114,26 +109,26 @@ def test_calculate_score_combined():
     assert_equal(score, 110, "test_calculate_score_combined")
 
 
+# Verify zero score returns False for highscore
 def test_check_if_highscore_zero_score():
-    """Test that zero score does not qualify as highscore."""
     result = score_manager.check_if_highscore(0, "test_category")
     assert_false(result, "test_check_if_highscore_zero_score")
 
 
+# Verify negative score returns False for highscore
 def test_check_if_highscore_negative_score():
-    """Test that negative score does not qualify as highscore."""
     result = score_manager.check_if_highscore(-10, "test_category")
     assert_false(result, "test_check_if_highscore_negative_score")
 
 
+# Verify positive score in empty category returns True
 def test_check_if_highscore_new_category():
-    """Test that any positive score qualifies in a new category."""
     result = score_manager.check_if_highscore(1, "brand_new_category_xyz")
     assert_true(result, "test_check_if_highscore_new_category")
 
 
+# Execute all tests and log pass/fail summary
 def run_all_tests():
-    """Run all score manager tests."""
     tests = [
         test_calculate_score_basic,
         test_calculate_score_with_time_bonus,

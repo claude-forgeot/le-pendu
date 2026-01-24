@@ -1,25 +1,14 @@
-# utils/word_manager.py
-
-"""
-Word Manager for the Hangman game.
-Manages word storage in TXT format.
-"""
+# Word loading and storage from TXT files with difficulty sections
 
 import random
 import os
 
+# Path to data/ folder (from utils/ go up one level with '..' then into 'data')
 DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data')
 
 
+# Parse TXT file into dict with difficulty keys and word lists
 def load_words_from_txt(file_path):
-    """
-    Load words from a TXT file with section format.
-    Format:
-        [difficulty_level]
-        word1
-        word2
-        ...
-    """
     words_data = {}
     current_difficulty = None
 
@@ -46,11 +35,8 @@ def load_words_from_txt(file_path):
         return {}
 
 
+# Load word dictionary for specified language (fr or en)
 def load_words(language):
-    """
-    Load words for the given language.
-    Both English and French words are loaded from TXT files.
-    """
     if language == 'en':
         file_path = os.path.join(DATA_DIR, 'words_en.txt')
     elif language == 'fr':
@@ -62,8 +48,8 @@ def load_words(language):
     return load_words_from_txt(file_path)
 
 
+# Select random uppercase word from specified difficulty level
 def get_random_word(words_data, difficulty):
-    """Select random word from words_data based on difficulty level."""
     difficulty_key = difficulty.lower()
     if difficulty_key not in words_data or not words_data[difficulty_key]:
         return ""
@@ -72,19 +58,16 @@ def get_random_word(words_data, difficulty):
     return word.upper()
 
 
+# Fetch random word for specified language and difficulty
 def get_word(language, difficulty):
-    """Get random word for given language and difficulty."""
     words_data = load_words(language)
     if not words_data:
         return ""
     return get_random_word(words_data, difficulty)
 
 
+# Append word to TXT file under specified difficulty section, returns success bool
 def add_word_to_txt(file_path, word, difficulty):
-    """
-    Add a word to a TXT file under the specified difficulty section.
-    Returns True if successful, False otherwise.
-    """
     try:
         words_data = load_words_from_txt(file_path)
 
@@ -121,11 +104,8 @@ def add_word_to_txt(file_path, word, difficulty):
         return False
 
 
+# Add validated word to language-specific TXT file, returns success bool
 def add_word(language, word, difficulty):
-    """
-    Add a word to the appropriate TXT file based on language.
-    Returns True if successful, False otherwise.
-    """
     if not word or not word.strip():
         print("Error: Word cannot be empty")
         return False

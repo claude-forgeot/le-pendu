@@ -1,40 +1,35 @@
-# tests/test_game_engine.py
-
-"""
-Unit tests for the game_engine module.
-Run with: python -m tests.test_game_engine
-"""
+# Unit tests for game_engine module: create_game, play_letter, is_won, is_lost
 
 from models import game_engine
 from tests import test_logger
 
 
+# Raise AssertionError if actual != expected
 def assert_equal(actual, expected, test_name):
-    """Helper function to assert equality."""
     if actual != expected:
         raise AssertionError(f"Expected {expected}, got {actual}")
 
 
+# Raise AssertionError if value is not True
 def assert_true(value, test_name):
-    """Helper function to assert true."""
     if not value:
         raise AssertionError(f"Expected True, got {value}")
 
 
+# Raise AssertionError if value is not False
 def assert_false(value, test_name):
-    """Helper function to assert false."""
     if value:
         raise AssertionError(f"Expected False, got {value}")
 
 
+# Raise AssertionError if item not in container
 def assert_in(item, container, test_name):
-    """Helper function to assert item is in container."""
     if item not in container:
         raise AssertionError(f"Expected {item} to be in {container}")
 
 
+# Verify create_game returns correct initial state with defaults
 def test_create_game_basic():
-    """Test basic game creation with default parameters."""
     game_state = game_engine.create_game("PYTHON")
 
     assert_equal(game_state["secret_word"], "PYTHON", "test_create_game_basic")
@@ -44,31 +39,31 @@ def test_create_game_basic():
     assert_equal(len(game_state["letters_played"]), 0, "test_create_game_basic")
 
 
+# Verify create_game respects custom max_errors parameter
 def test_create_game_custom_max_errors():
-    """Test game creation with custom max errors."""
     game_state = game_engine.create_game("HANGMAN", max_errors=10)
 
     assert_equal(game_state["secret_word"], "HANGMAN", "test_create_game_custom_max_errors")
     assert_equal(game_state["max_errors"], 10, "test_create_game_custom_max_errors")
 
 
+# Verify lowercase input is converted to uppercase
 def test_create_game_lowercase_word():
-    """Test that lowercase words are converted to uppercase."""
     game_state = game_engine.create_game("python")
 
     assert_equal(game_state["secret_word"], "PYTHON", "test_create_game_lowercase_word")
 
 
+# Verify masked word shows all underscores initially
 def test_masked_word_no_letters_played():
-    """Test masked word when no letters have been played."""
     game_state = game_engine.create_game("PYTHON")
     masked = game_engine.get_masked_word(game_state)
 
     assert_equal(masked, "_ _ _ _ _ _", "test_masked_word_no_letters_played")
 
 
+# Verify masked word reveals guessed letters correctly
 def test_masked_word_partial_guess():
-    """Test masked word with some letters guessed."""
     game_state = game_engine.create_game("PYTHON")
     game_state["letters_played"].add("P")
     game_state["letters_played"].add("O")
@@ -77,8 +72,8 @@ def test_masked_word_partial_guess():
     assert_equal(masked, "P _ _ _ O _", "test_masked_word_partial_guess")
 
 
+# Verify masked word shows full word when all letters guessed
 def test_masked_word_all_letters_guessed():
-    """Test masked word when all letters are guessed."""
     game_state = game_engine.create_game("PYTHON")
     for letter in "PYTHON":
         game_state["letters_played"].add(letter)
@@ -87,8 +82,8 @@ def test_masked_word_all_letters_guessed():
     assert_equal(masked, "P Y T H O N", "test_masked_word_all_letters_guessed")
 
 
+# Verify duplicate letters are all revealed at once
 def test_masked_word_repeated_letters():
-    """Test masked word with repeated letters in the word."""
     game_state = game_engine.create_game("HELLO")
     game_state["letters_played"].add("L")
     masked = game_engine.get_masked_word(game_state)
@@ -96,8 +91,8 @@ def test_masked_word_repeated_letters():
     assert_equal(masked, "_ _ L L _", "test_masked_word_repeated_letters")
 
 
+# Verify correct letter is added without incrementing errors
 def test_play_valid_correct_letter():
-    """Test playing a valid letter that is in the word."""
     game_state = game_engine.create_game("PYTHON")
     result = game_engine.play_letter(game_state, "P")
 
@@ -106,8 +101,8 @@ def test_play_valid_correct_letter():
     assert_equal(game_state["errors"], 0, "test_play_valid_correct_letter")
 
 
+# Verify wrong letter is added and error count increases
 def test_play_valid_incorrect_letter():
-    """Test playing a valid letter that is not in the word."""
     game_state = game_engine.create_game("PYTHON")
     result = game_engine.play_letter(game_state, "Z")
 
@@ -116,8 +111,8 @@ def test_play_valid_incorrect_letter():
     assert_equal(game_state["errors"], 1, "test_play_valid_incorrect_letter")
 
 
+# Verify lowercase letter is converted to uppercase in play
 def test_play_lowercase_letter():
-    """Test playing a lowercase letter is converted to uppercase."""
     game_state = game_engine.create_game("PYTHON")
     result = game_engine.play_letter(game_state, "p")
 
@@ -125,8 +120,8 @@ def test_play_lowercase_letter():
     assert_in("P", game_state["letters_played"], "test_play_lowercase_letter")
 
 
+# Verify duplicate letter play returns False
 def test_play_already_played_letter():
-    """Test playing a letter that has already been played."""
     game_state = game_engine.create_game("PYTHON")
     game_engine.play_letter(game_state, "P")
     result = game_engine.play_letter(game_state, "P")
@@ -134,32 +129,32 @@ def test_play_already_played_letter():
     assert_false(result, "test_play_already_played_letter")
 
 
+# Verify multi-char input is rejected
 def test_play_invalid_multiple_letters():
-    """Test playing multiple letters at once."""
     game_state = game_engine.create_game("PYTHON")
     result = game_engine.play_letter(game_state, "PY")
 
     assert_false(result, "test_play_invalid_multiple_letters")
 
 
+# Verify numeric input is rejected
 def test_play_invalid_number():
-    """Test playing a number instead of a letter."""
     game_state = game_engine.create_game("PYTHON")
     result = game_engine.play_letter(game_state, "5")
 
     assert_false(result, "test_play_invalid_number")
 
 
+# Verify empty string input is rejected
 def test_play_invalid_empty_string():
-    """Test playing an empty string."""
     game_state = game_engine.create_game("PYTHON")
     result = game_engine.play_letter(game_state, "")
 
     assert_false(result, "test_play_invalid_empty_string")
 
 
+# Verify is_won returns True when all letters found
 def test_is_won_all_letters_guessed():
-    """Test win condition when all letters are guessed."""
     game_state = game_engine.create_game("CAT")
     for letter in "CAT":
         game_state["letters_played"].add(letter)
@@ -167,8 +162,8 @@ def test_is_won_all_letters_guessed():
     assert_true(game_engine.is_won(game_state), "test_is_won_all_letters_guessed")
 
 
+# Verify is_won returns False with incomplete word
 def test_is_won_some_letters_missing():
-    """Test win condition when some letters are not yet guessed."""
     game_state = game_engine.create_game("PYTHON")
     game_state["letters_played"].add("P")
     game_state["letters_played"].add("Y")
@@ -176,8 +171,8 @@ def test_is_won_some_letters_missing():
     assert_false(game_engine.is_won(game_state), "test_is_won_some_letters_missing")
 
 
+# Verify is_won returns True even with extra wrong letters
 def test_is_won_extra_letters():
-    """Test win condition when extra wrong letters were played."""
     game_state = game_engine.create_game("CAT")
     for letter in "CATZYX":
         game_state["letters_played"].add(letter)
@@ -185,32 +180,32 @@ def test_is_won_extra_letters():
     assert_true(game_engine.is_won(game_state), "test_is_won_extra_letters")
 
 
+# Verify is_lost returns True at max errors
 def test_is_lost_max_errors_reached():
-    """Test loss condition when max errors is reached."""
     game_state = game_engine.create_game("PYTHON", max_errors=3)
     game_state["errors"] = 3
 
     assert_true(game_engine.is_lost(game_state), "test_is_lost_max_errors_reached")
 
 
+# Verify is_lost returns False below max errors
 def test_is_lost_errors_below_max():
-    """Test loss condition when errors are below max."""
     game_state = game_engine.create_game("PYTHON", max_errors=6)
     game_state["errors"] = 3
 
     assert_false(game_engine.is_lost(game_state), "test_is_lost_errors_below_max")
 
 
+# Verify get_played_letters returns empty list initially
 def test_get_played_letters_empty():
-    """Test getting played letters when none have been played."""
     game_state = game_engine.create_game("PYTHON")
     letters = game_engine.get_played_letters(game_state)
 
     assert_equal(letters, [], "test_get_played_letters_empty")
 
 
+# Verify get_played_letters returns alphabetically sorted list
 def test_get_played_letters_sorted():
-    """Test that played letters are returned in sorted order."""
     game_state = game_engine.create_game("PYTHON")
     for letter in "ZAP":
         game_state["letters_played"].add(letter)
@@ -219,8 +214,8 @@ def test_get_played_letters_sorted():
     assert_equal(letters, ["A", "P", "Z"], "test_get_played_letters_sorted")
 
 
+# Verify full win scenario with status change to won
 def test_winning_game_flow():
-    """Test a complete winning game scenario."""
     game_state = game_engine.create_game("CAT", max_errors=6)
 
     game_engine.play_letter(game_state, "C")
@@ -234,8 +229,8 @@ def test_winning_game_flow():
     assert_true(game_engine.is_won(game_state), "test_winning_game_flow")
 
 
+# Verify full loss scenario with status change to lost
 def test_losing_game_flow():
-    """Test a complete losing game scenario."""
     game_state = game_engine.create_game("CAT", max_errors=3)
 
     game_engine.play_letter(game_state, "X")
@@ -250,8 +245,8 @@ def test_losing_game_flow():
     assert_true(game_engine.is_lost(game_state), "test_losing_game_flow")
 
 
+# Execute all tests and log pass/fail summary
 def run_all_tests():
-    """Run all game engine tests."""
     tests = [
         test_create_game_basic,
         test_create_game_custom_max_errors,

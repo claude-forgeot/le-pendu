@@ -1,12 +1,8 @@
-# tests/run_all_tests.py
-
-"""
-Main test runner that executes all test suites.
-Run with: python -m tests.run_all_tests
-"""
+# Main test runner executing all test suites and logging results
 
 from tests import test_logger
 
+# Logger tests
 test_logger.clear()
 test_logger.log("HANGMAN GAME - UNIT TESTS")
 

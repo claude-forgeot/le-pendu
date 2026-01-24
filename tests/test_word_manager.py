@@ -1,48 +1,43 @@
-# tests/test_word_manager.py
-
-"""
-Tests for the word_manager module.
-Run with: python -m tests.test_word_manager
-"""
+# Tests for word_manager module: load_words, get_word, add_word
 
 from utils import word_manager
 from tests import test_logger
 
 
+# Verify French words load as non-empty dict
 def test_load_words_french():
-    """Test loading French words file."""
     words = word_manager.load_words("fr")
 
     if type(words) != dict or len(words) == 0:
         raise AssertionError("words should be a non-empty dict")
 
 
+# Verify English words load as non-empty dict
 def test_load_words_english():
-    """Test loading English words file."""
     words = word_manager.load_words("en")
 
     if type(words) != dict or len(words) == 0:
         raise AssertionError("words should be a non-empty dict")
 
 
+# Verify all three difficulty keys exist in loaded words
 def test_load_words_has_difficulties():
-    """Test that loaded words have all difficulty levels."""
     words = word_manager.load_words("fr")
 
     if "facile" not in words or "moyen" not in words or "difficile" not in words:
         raise AssertionError("missing difficulty levels")
 
 
+# Verify invalid language returns empty dict
 def test_load_words_invalid_language():
-    """Test loading words for a nonexistent language."""
     words = word_manager.load_words("xyz")
 
     if words != {}:
         raise AssertionError("should return empty dict")
 
 
+# Verify get_random_word returns word from correct difficulty
 def test_get_random_word_facile():
-    """Test getting a random easy word."""
     test_words = {
         "facile": ["CAT", "DOG", "RAT"],
         "moyen": ["PYTHON"],
@@ -54,8 +49,8 @@ def test_get_random_word_facile():
         raise AssertionError("word not in expected list")
 
 
+# Verify invalid difficulty returns empty string
 def test_get_random_word_invalid_difficulty():
-    """Test getting word with invalid difficulty."""
     test_words = {"facile": ["CAT"]}
     word = word_manager.get_random_word(test_words, "invalid")
 
@@ -63,8 +58,8 @@ def test_get_random_word_invalid_difficulty():
         raise AssertionError("should return empty string")
 
 
+# Verify returned word is converted to uppercase
 def test_get_random_word_uppercase():
-    """Test that returned word is in uppercase."""
     lowercase_words = {"facile": ["cat", "dog"]}
     word = word_manager.get_random_word(lowercase_words, "facile")
 
@@ -72,48 +67,48 @@ def test_get_random_word_uppercase():
         raise AssertionError("word should be uppercase")
 
 
+# Verify get_word returns valid uppercase French word
 def test_get_word_french_facile():
-    """Test getting a French easy word."""
     word = word_manager.get_word("fr", "facile")
 
     if type(word) != str or len(word) == 0 or not word.isupper():
         raise AssertionError("invalid word returned")
 
 
+# Verify get_word with invalid language returns empty
 def test_get_word_invalid_language():
-    """Test getting word with invalid language."""
     word = word_manager.get_word("xyz", "facile")
 
     if word != "":
         raise AssertionError("should return empty string")
 
 
+# Verify get_word with invalid difficulty returns empty
 def test_get_word_invalid_difficulty():
-    """Test getting word with invalid difficulty."""
     word = word_manager.get_word("fr", "invalid")
 
     if word != "":
         raise AssertionError("should return empty string")
 
 
+# Verify English TXT file loads with words in facile
 def test_load_words_from_txt():
-    """Test that English words are loaded from TXT format."""
     words = word_manager.load_words("en")
 
     if "facile" not in words or len(words["facile"]) == 0:
         raise AssertionError("TXT loading failed")
 
 
+# Verify French TXT file loads with words in facile
 def test_load_words_french_txt():
-    """Test that French words are loaded from TXT format."""
     words = word_manager.load_words("fr")
 
     if "facile" not in words or len(words["facile"]) == 0:
         raise AssertionError("TXT loading failed")
 
 
+# Verify add_word rejects empty word, invalid difficulty, invalid lang
 def test_add_word_validation():
-    """Test add_word input validation."""
     result1 = word_manager.add_word("fr", "", "facile")
     result2 = word_manager.add_word("fr", "test", "invalid_difficulty")
     result3 = word_manager.add_word("xyz", "test", "facile")
@@ -122,8 +117,8 @@ def test_add_word_validation():
         raise AssertionError("should reject invalid inputs")
 
 
+# Execute all tests and log pass/fail summary
 def run_all_tests():
-    """Run all word manager tests."""
     tests = [
         test_load_words_french,
         test_load_words_english,

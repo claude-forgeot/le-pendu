@@ -1,7 +1,4 @@
-"""
-Add Word view for the Hangman game.
-Allows users to add new words to the game database with a graphical interface.
-"""
+# Add word form view with text input and difficulty selection
 
 import pygame
 import sys
@@ -19,8 +16,8 @@ from utils import word_manager
 img_background = None
 
 
+# Load and scale background image for add word view
 def load_resources():
-    """Load resources for add word view."""
     global img_background
 
     try:
@@ -31,11 +28,8 @@ def load_resources():
         img_background.fill((40, 40, 60))
 
 
+# Main loop handling text input, difficulty selection and word submission
 def run_view(screen, fonts, clock):
-    """
-    Main entry point for add word view.
-    Returns the next view name: "main_menu", "quit", etc.
-    """
     load_resources()
 
     selected_difficulty = "facile"

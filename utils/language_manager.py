@@ -1,5 +1,8 @@
+# Localization manager for FR/EN translations
+
 import os
 
+# Path to data/ folder (from utils/ go up one level with '..' then into 'data')
 DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data')
 LOCALES_FILE = os.path.join(DATA_DIR, 'locales.txt')
 

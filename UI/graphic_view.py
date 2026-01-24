@@ -1,7 +1,4 @@
-"""
-Main GUI controller for the Hangman game.
-Single window architecture - all views share the same pygame window.
-"""
+# Main GUI controller managing view routing with single pygame window
 
 import pygame
 import sys
@@ -18,8 +15,8 @@ fonts = {}
 clock = None
 
 
+# Set up pygame display, mixer, fonts and clock as global objects
 def initialize_pygame():
-    """Initialize pygame once for the entire application."""
     global screen, fonts, clock
 
     pygame.init()
@@ -30,10 +27,7 @@ def initialize_pygame():
     except pygame.error as e:
         print(f"Error initializing audio mixer: {e}")
 
-    screen = pygame.display.set_mode(
-        (constants.WIDTH, constants.HEIGHT),
-        pygame.RESIZABLE
-    )
+    screen = pygame.display.set_mode((constants.WIDTH, constants.HEIGHT))
     pygame.display.set_caption("Le Pendu")
 
     fonts = pygame_utils.create_fonts()
@@ -41,8 +35,8 @@ def initialize_pygame():
     clock = pygame.time.Clock()
 
 
+# Load images for main menu (background, logo, flags, door, book)
 def load_main_menu_resources():
-    """Load resources specific to main menu."""
     resources = {}
 
     path_door = os.path.join(constants.BASE_DIR, "assets", "images", "door.png")
@@ -62,11 +56,8 @@ def load_main_menu_resources():
     return resources
 
 
+# Display main menu with mode buttons, language flags, scores panel and rules popup
 def main_menu_view():
-    """
-    Main menu view - displays game modes and language options.
-    Returns the next view name or None to quit.
-    """
     global screen, fonts
 
     resources = load_main_menu_resources()
@@ -339,8 +330,8 @@ def main_menu_view():
         clock.tick(60)
 
 
+# Main loop routing between views based on returned view names
 def run_game():
-    """Main game loop - manages view transitions."""
     global screen, fonts, clock
 
     initialize_pygame()
@@ -378,8 +369,8 @@ def run_game():
     sys.exit()
 
 
+# Application entry point called from main.py
 def main_gui():
-    """Entry point for the game GUI."""
     run_game()
 
 

@@ -1,13 +1,13 @@
+# Highscore management with TXT file persistence
+
 import os
 
+# Path to highscores file (from utils/ go up one level then into data/)
 SCORE_FILE = os.path.join(os.path.dirname(__file__), '..', 'data', 'highscores.txt')
 
 
+# Compute score: +20 per correct, -10 per wrong, -20 per hint, +2 per second remaining
 def calculate_score(state, time_remaining=0, hints_used=0):
-    """
-    Calculate score with formula:
-    (20 * correct_letters) - (10 * wrong_letters) - (20 * hints_used) + (time_remaining * 2)
-    """
     played = state.get("letters_played", [])
     secret = state.get("secret_word", "").lower()
 
@@ -29,8 +29,8 @@ def calculate_score(state, time_remaining=0, hints_used=0):
     return score
 
 
+# Return True if score qualifies for top 10 in specified category
 def check_if_highscore(score, category="normal"):
-    """Check if score qualifies for top 10 in a category."""
     if score <= 0:
         return False
 
@@ -48,8 +48,8 @@ def check_if_highscore(score, category="normal"):
     return score > lowest_score
 
 
+# Insert score into category, sort descending, keep top 10, persist to TXT
 def save_score(name, score, category="normal"):
-    """Save score to the TXT file."""
     all_scores = _load_scores()
 
     if category not in all_scores:
@@ -76,8 +76,8 @@ def save_score(name, score, category="normal"):
     _save_scores(all_scores)
 
 
+# Parse highscores.txt into dict with category keys and score entry lists
 def _load_scores():
-    """Load scores from TXT file."""
     if not os.path.exists(SCORE_FILE):
         return {}
 
@@ -119,8 +119,8 @@ def _load_scores():
     return all_scores
 
 
+# Write all scores dict to highscores.txt with [category] sections
 def _save_scores(all_scores):
-    """Save scores to TXT file."""
     try:
         file = open(SCORE_FILE, 'w', encoding='utf-8')
 

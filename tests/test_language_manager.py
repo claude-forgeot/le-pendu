@@ -1,24 +1,19 @@
-# tests/test_language_manager.py
-
-"""
-Simple tests for the language_manager module.
-Run with: python -m tests.test_language_manager
-"""
+# Tests for language_manager module: get/set language, get_text
 
 from utils import language_manager
 from tests import test_logger
 
 
+# Verify default language is French
 def test_default_language():
-    """Check that the default language is French."""
     language = language_manager.get_current_language()
 
     if language != "fr":
         raise AssertionError(f"expected 'fr', got '{language}'")
 
 
+# Verify set_language to English succeeds
 def test_set_language_english():
-    """Check that we can change the language to English."""
     result = language_manager.set_language("en")
 
     if result != True:
@@ -27,16 +22,16 @@ def test_set_language_english():
     language_manager.set_language("fr")
 
 
+# Verify set_language with invalid code returns False
 def test_set_language_invalid():
-    """Check that an invalid language returns False."""
     result = language_manager.set_language("xyz")
 
     if result != False:
         raise AssertionError("should return False")
 
 
+# Verify get_text returns correct French translation
 def test_get_text_french():
-    """Check that we get the correct text in French."""
     language_manager.set_language("fr")
     text = language_manager.get_text("welcome")
 
@@ -44,8 +39,8 @@ def test_get_text_french():
         raise AssertionError("incorrect text")
 
 
+# Verify get_text returns correct English translation
 def test_get_text_english():
-    """Check that we get the correct text in English."""
     language_manager.set_language("en")
     text = language_manager.get_text("welcome")
 
@@ -55,30 +50,30 @@ def test_get_text_english():
     language_manager.set_language("fr")
 
 
+# Verify missing key returns the key string as fallback
 def test_nonexistent_key():
-    """Check that a nonexistent key returns the key itself."""
     text = language_manager.get_text("key_that_does_not_exist")
 
     if text != "key_that_does_not_exist":
         raise AssertionError("should return the key")
 
 
+# Verify both fr and en are in available languages
 def test_available_languages():
-    """Check that French and English are available."""
     languages = language_manager.get_available_languages()
 
     if "fr" not in languages or "en" not in languages:
         raise AssertionError("fr and en should be available")
 
 
+# Verify _locales_data is populated from locales.txt
 def test_locales_data_loaded():
-    """Check that the data is loaded."""
     if len(language_manager._locales_data) == 0:
         raise AssertionError("_locales_data is empty")
 
 
+# Execute all tests and log pass/fail summary
 def run_all_tests():
-    """Run all language manager tests."""
     tests = [
         test_default_language,
         test_set_language_english,

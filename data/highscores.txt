@@ -1,7 +1,12 @@
 [normal]
+GIVE=315
+NEVER=290
+MEGA=122
 MEGA=90
 
 [difficile]
+GONNA=183
+GIVE=171
 PROUT=140
 
 [infinite]

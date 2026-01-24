@@ -77,7 +77,8 @@ def main_menu_view():
     show_scores = False
 
     while True:
-        win_w, win_h = screen.get_size()
+        # Utilisation des constantes fixes au lieu de get_size() dynamique
+        win_w, win_h = constants.WIDTH, constants.HEIGHT
         mouse_pos = pygame.mouse.get_pos()
         current_lang = language_manager.get_current_language()
 
@@ -156,7 +157,7 @@ def main_menu_view():
         rect_infini = pygame.Rect(target_x, start_y + spacing * 3, btn_w_base, btn_h_base)
         rect_add_word = pygame.Rect(target_x + btn_w_base + 20, start_y + spacing * 3, btn_w_base, btn_h_base)
 
-        # Button configuration: (rect, key, color, hover_color, view_name)
+        # Button configuration
         buttons_config = [
             (rect_facile, "button_facile", constants.GREEN, constants.GREEN_HOVER, "easy_mode"),
             (rect_normal, "button_normal", constants.ORANGE, constants.ORANGE_HOVER, "normal_mode"),
@@ -194,29 +195,23 @@ def main_menu_view():
             all_data = {}
             if os.path.exists(path_scores):
                 try:
-                    file = open(path_scores, "r", encoding="utf-8")
-                    lines = file.readlines()
-                    file.close()
-                    current_cat = None
-                    for line in lines:
-                        line = line.strip()
-                        if not line:
-                            continue
-                        if line.startswith('[') and line.endswith(']'):
-                            current_cat = line[1:-1]
-                            all_data[current_cat] = []
-                            continue
-                        if current_cat and '=' in line:
-                            pos = line.find('=')
-                            name = line[:pos]
-                            score_str = line[pos + 1:]
-                            try:
-                                score_val = int(score_str)
-                                all_data[current_cat].append({"name": name, "score": score_val})
-                            except:
-                                pass
-                except:
-                    pass
+                    with open(path_scores, "r", encoding="utf-8") as file:
+                        lines = file.readlines()
+                        current_cat = None
+                        for line in lines:
+                            line = line.strip()
+                            if not line: continue
+                            if line.startswith('[') and line.endswith(']'):
+                                current_cat = line[1:-1]
+                                all_data[current_cat] = []
+                            elif current_cat and '=' in line:
+                                pos = line.find('=')
+                                name = line[:pos]
+                                try:
+                                    score_val = int(line[pos + 1:])
+                                    all_data[current_cat].append({"name": name, "score": score_val})
+                                except: pass
+                except: pass
 
             panel_margin = 40
             panel_area_w = win_w - (panel_margin * 2)
@@ -225,17 +220,13 @@ def main_menu_view():
             panel_y = 130
 
             cat_mapping = {
-                "button_facile": "facile",
-                "button_normal": "normal",
-                "button_difficile": "difficile",
-                "button_infini": "infinite"
+                "button_facile": "facile", "button_normal": "normal",
+                "button_difficile": "difficile", "button_infini": "infinite"
             }
             difficulty_keys = ["button_facile", "button_normal", "button_difficile", "button_infini"]
             header_font = pygame.font.SysFont("Arial", int(panel_w * 0.10), bold=True)
             entry_font = pygame.font.SysFont("Arial", int(panel_w * 0.09), bold=False)
-            name_label = "NOM" if current_lang == "fr" else "NAME"
-            score_label = "SCORE" if current_lang == "fr" else "SCORE"
-
+            
             for i in range(len(difficulty_keys)):
                 key = difficulty_keys[i]
                 x_pos = panel_margin + i * (panel_w + 20)
@@ -249,22 +240,21 @@ def main_menu_view():
                 screen.blit(diff_t, (x_pos + (panel_w // 2 - diff_t.get_width() // 2), panel_y + 15))
 
                 header_y = panel_y + 65
-                name_surf = header_font.render(name_label, True, (255, 235, 59))
-                score_surf = header_font.render(score_label, True, (255, 235, 59))
+                name_surf = header_font.render("NOM" if current_lang == "fr" else "NAME", True, (255, 235, 59))
+                score_surf = header_font.render("SCORE", True, (255, 235, 59))
                 screen.blit(name_surf, (x_pos + 15, header_y))
                 screen.blit(score_surf, (x_pos + panel_w - score_surf.get_width() - 15, header_y))
                 pygame.draw.line(screen, (255, 255, 255), (x_pos + 10, header_y + 25), (x_pos + panel_w - 10, header_y + 25), 1)
 
-                cat_key = cat_mapping[key]
-                entries = all_data.get(cat_key, [])
+                entries = all_data.get(cat_mapping[key], [])
                 entry_y = header_y + 35
                 for j in range(min(5, len(entries))):
                     entry = entries[j]
-                    name_text = entry_font.render(entry["name"], True, (255, 255, 255))
-                    score_text = entry_font.render(str(entry["score"]), True, (255, 255, 255))
-                    screen.blit(name_text, (x_pos + 15, entry_y))
-                    screen.blit(score_text, (x_pos + panel_w - score_text.get_width() - 15, entry_y))
-                    entry_y = entry_y + 30
+                    n_t = entry_font.render(entry["name"], True, (255, 255, 255))
+                    s_t = entry_font.render(str(entry["score"]), True, (255, 255, 255))
+                    screen.blit(n_t, (x_pos + 15, entry_y))
+                    screen.blit(s_t, (x_pos + panel_w - s_t.get_width() - 15, entry_y))
+                    entry_y += 30
 
         # Rules popup
         if show_rules:
@@ -274,6 +264,7 @@ def main_menu_view():
             p_w, p_h = int(win_w * 0.7), int(win_h * 0.55)
             p_rect = pygame.Rect((win_w - p_w) // 2, (win_h - p_h) // 2, p_w, p_h)
             pygame.draw.rect(screen, (255, 255, 255), p_rect, border_radius=15)
+            
             title = "REGLES" if current_lang == "fr" else "RULES"
             intro = "Devinez le mot lettre par lettre avant que le dessin ne soit complet !" if current_lang == "fr" else "Guess the word letter by letter!"
             rules_text = [title, "", intro, "",
@@ -281,21 +272,11 @@ def main_menu_view():
                           "- Difficile : 5 vies" if current_lang == "fr" else "- Hard: 5 lives",
                           "- Infini : Illimite" if current_lang == "fr" else "- Infinite: No limit",
                           "", "Cliquez pour fermer" if current_lang == "fr" else "Click to close"]
-            for i in range(len(rules_text)):
-                text = rules_text[i]
-                if i == 0:
-                    color = (211, 47, 47)
-                    size_factor = 0.08
-                    is_bold = True
-                elif i == 2:
-                    color = (80, 80, 80)
-                    size_factor = 0.05
-                    is_bold = False
-                else:
-                    color = (60, 60, 60)
-                    size_factor = 0.06
-                    is_bold = False
-                txt_surf = pygame.font.SysFont("Arial", int(p_h * size_factor), bold=is_bold).render(text, True, color)
+            for i, text in enumerate(rules_text):
+                if i == 0: color, size_f, bold = (211, 47, 47), 0.08, True
+                elif i == 2: color, size_f, bold = (80, 80, 80), 0.05, False
+                else: color, size_f, bold = (60, 60, 60), 0.06, False
+                txt_surf = pygame.font.SysFont("Arial", int(p_h * size_f), bold=bold).render(text, True, color)
                 screen.blit(txt_surf, (p_rect.centerx - txt_surf.get_width() // 2, p_rect.y + 35 + (i * 32)))
 
         # Event handling
@@ -317,8 +298,6 @@ def main_menu_view():
                 if rect_scores.collidepoint(event.pos):
                     pygame_utils.play_click_sound()
                     show_scores = not show_scores
-
-                # Game mode buttons click handling
                 if not show_scores:
                     for r, key, color, hover_c, view_name in buttons_config:
                         if r.collidepoint(event.pos):
@@ -333,35 +312,27 @@ def main_menu_view():
 # Main loop routing between views based on returned view names
 def run_game():
     global screen, fonts, clock
-
     initialize_pygame()
-
     current_view = "main_menu"
 
     while current_view is not None:
         if current_view == "main_menu":
             current_view = main_menu_view()
-
         elif current_view == "easy_mode":
             from UI import easy_mode_view
             current_view = easy_mode_view.run_view(screen, fonts, clock)
-
         elif current_view == "normal_mode":
             from UI import normal_mode_view
             current_view = normal_mode_view.run_view(screen, fonts, clock)
-
         elif current_view == "hard_mode":
             from UI import hard_mode_view
             current_view = hard_mode_view.run_view(screen, fonts, clock)
-
         elif current_view == "infinite_mode":
             from UI import infinite_mode_view
             current_view = infinite_mode_view.run_view(screen, fonts, clock)
-
         elif current_view == "add_word":
             from UI import add_word_view
             current_view = add_word_view.run_view(screen, fonts, clock)
-
         else:
             current_view = "main_menu"
 

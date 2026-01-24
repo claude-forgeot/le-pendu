@@ -325,8 +325,8 @@ def run_view(screen, fonts, clock):
                 if dist < HINT_RADIUS and not paused and hints_left > 0 and game_state["status"] == "in_progress":
                     pygame_utils.play_click_sound()
                     if use_real_hint(game_state, secret_word):
-                        hints_left = hints_left - 1
-                        hints_used = hints_used + 1
+                        hints_left -= 1
+                        hints_used += 1
 
             if not paused and event.type == pygame.KEYDOWN and game_state["status"] == "in_progress":
                 letter = event.unicode.lower()

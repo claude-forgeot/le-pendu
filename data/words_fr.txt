@@ -19,6 +19,8 @@ pied
 lune
 eau
 chien
+congo
+bonjour
 
 [moyen]
 guitare
@@ -41,6 +43,7 @@ riviere
 foret
 histoire
 langage
+carnivore
 
 [difficile]
 xylophone
@@ -63,3 +66,5 @@ kaleidoscope
 archeologie
 hieroglyphe
 phenomene
+condrychtien
+

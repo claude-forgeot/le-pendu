@@ -60,13 +60,12 @@ def initialize_game():
     pygame.mixer.music.stop()
     pygame.mixer.stop()
 
-    music_path = os.path.join("assets", "audios", "facile.ogg")
-    if os.path.exists(music_path):
+    if os.path.exists(constants.AUDIO_EASY_MODE):
         try:
-            pygame.mixer.music.load(music_path)
+            pygame.mixer.music.load(constants.AUDIO_EASY_MODE)
             pygame.mixer.music.play(-1)
-        except:
-            pass
+        except pygame.error as e:
+            print(f"Error loading easy mode music: {e}")
 
     current_lang = language_manager.get_current_language()
     secret_word = word_manager.get_word(current_lang, "facile")
@@ -106,9 +105,8 @@ def play_win_sequence(screen, fonts, secret_word):
     if os.path.exists(win_bg_path):
         current_bg = pygame.transform.scale(pygame.image.load(win_bg_path).convert(), (constants.WIDTH, constants.HEIGHT))
 
-    audio_path = os.path.join("assets", "audios", "victoire.ogg")
-    if os.path.exists(audio_path):
-        pygame.mixer.music.load(audio_path)
+    if os.path.exists(constants.AUDIO_VICTORY):
+        pygame.mixer.music.load(constants.AUDIO_VICTORY)
         pygame.mixer.music.play()
 
     fade = pygame.Surface((constants.WIDTH, constants.HEIGHT))

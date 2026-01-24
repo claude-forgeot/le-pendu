@@ -1,9 +1,6 @@
 import pygame
-import os
 
 from UI import constants
-
-_sound_click = None
 
 
 # Create and return dictionary of commonly used fonts
@@ -41,22 +38,14 @@ def load_hangman_images(size=None):
     return images
 
 
-# Load sound effects
+# Load sound effects (placeholder for future sounds)
 def load_sounds():
-    global _sound_click
-
-    try:
-        if os.path.exists(constants.AUDIO_CLICK):
-            _sound_click = pygame.mixer.Sound(constants.AUDIO_CLICK)
-    except pygame.error as e:
-        print(f"Error loading click sound: {e}")
-        _sound_click = None
+    pass
 
 
-# Play the click sound effect
+# Play click sound (disabled - click.ogg file missing)
 def play_click_sound():
-    if _sound_click:
-        _sound_click.play()
+    pass
 
 
 # Draw a rounded button with centered text

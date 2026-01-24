@@ -23,7 +23,12 @@ def initialize_pygame():
     global screen, fonts, clock
 
     pygame.init()
-    pygame.mixer.init()
+    try:
+        pygame.mixer.quit()
+        pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=2048)
+        pygame.mixer.music.set_volume(1.0)
+    except pygame.error as e:
+        print(f"Error initializing audio mixer: {e}")
 
     screen = pygame.display.set_mode(
         (constants.WIDTH, constants.HEIGHT),
@@ -69,11 +74,12 @@ def main_menu_view():
         return None
 
     # Start main menu music
-    try:
-        pygame.mixer.music.load(constants.AUDIO_MAIN_MENU)
-        pygame.mixer.music.play(-1)
-    except pygame.error:
-        pass
+    if os.path.exists(constants.AUDIO_MAIN_MENU):
+        try:
+            pygame.mixer.music.load(constants.AUDIO_MAIN_MENU)
+            pygame.mixer.music.play(-1)
+        except pygame.error as e:
+            print(f"Error loading main menu music: {e}")
 
     path_scores = os.path.join(constants.BASE_DIR, "data", "highscores.txt")
     show_rules = False

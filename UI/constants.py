@@ -54,10 +54,15 @@ IMG_LEFT_LEG = os.path.join(IMAGES_DIR, "jambe_gauche.png")
 
 # Audio paths
 AUDIO_MAIN_MENU = os.path.join(AUDIOS_DIR, "main.ogg")
-AUDIO_HARD_MODE = os.path.join(AUDIOS_DIR, "difficile.ogg")
-AUDIO_CLICK = os.path.join(AUDIOS_DIR, "click.ogg")
-AUDIO_LOSE_HARD = os.path.join(AUDIOS_DIR, "losehard.ogg")
+AUDIO_EASY_MODE = os.path.join(AUDIOS_DIR, "facile.ogg")
 AUDIO_NORMAL_MODE = os.path.join(AUDIOS_DIR, "normal.ogg")
+AUDIO_HARD_MODE = os.path.join(AUDIOS_DIR, "difficile.ogg")
+AUDIO_INFINITE_MODE = os.path.join(AUDIOS_DIR, "infinite.mp3")
+AUDIO_VICTORY = os.path.join(AUDIOS_DIR, "victoire.ogg")
+AUDIO_WIN_HARD = os.path.join(AUDIOS_DIR, "winhard.ogg")
+AUDIO_LOSE_NORMAL = os.path.join(AUDIOS_DIR, "macron.ogg")
+AUDIO_LOSE_HARD = os.path.join(AUDIOS_DIR, "losehard.ogg")
+AUDIO_LOSE_INFINITE = os.path.join(AUDIOS_DIR, "lose_infinite.mp3")
 
 # Video paths (folder is "vidéo" with accent)
 VIDEO_LOSE_HARD = os.path.join(ASSETS_DIR, "vidéo", "losehard.mp4")

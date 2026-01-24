@@ -134,9 +134,8 @@ def play_win_sequence(screen, fonts, secret_word, state, time_remaining, hints_u
     if os.path.exists(win_bg_path):
         current_win_bg = pygame.transform.scale(pygame.image.load(win_bg_path).convert(), (constants.WIDTH, constants.HEIGHT))
 
-    win_audio_path = os.path.join("assets", "audios", "victoire.ogg")
-    if os.path.exists(win_audio_path):
-        pygame.mixer.music.load(win_audio_path)
+    if os.path.exists(constants.AUDIO_VICTORY):
+        pygame.mixer.music.load(constants.AUDIO_VICTORY)
         pygame.mixer.music.play()
 
     fade = pygame.Surface((constants.WIDTH, constants.HEIGHT))
@@ -195,8 +194,6 @@ def play_lose_sequence(screen, fonts, secret_word, state):
     """Play the loss sequence with macron.mp4 and macron.ogg (12s to 17s)."""
     pygame.mixer.music.stop()
     video_path = constants.VIDEO_LOSE_NORMAL
-    audio_path = os.path.join("assets", "audios", "macron.ogg")
-
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
         cap = None
@@ -207,8 +204,8 @@ def play_lose_sequence(screen, fonts, secret_word, state):
     if cap:
         fps = cap.get(cv2.CAP_PROP_FPS) or 30
 
-    if os.path.exists(audio_path):
-        pygame.mixer.music.load(audio_path)
+    if os.path.exists(constants.AUDIO_LOSE_NORMAL):
+        pygame.mixer.music.load(constants.AUDIO_LOSE_NORMAL)
         pygame.mixer.music.play(start=12.0)
 
     clock_local = pygame.time.Clock()

@@ -60,13 +60,12 @@ def initialize_game(reset_score=False):
     pygame.mixer.music.stop()
     pygame.mixer.stop()
 
-    music_path = os.path.join("assets", "audios", "infinite.mp3")
-    if os.path.exists(music_path):
+    if os.path.exists(constants.AUDIO_INFINITE_MODE):
         try:
-            pygame.mixer.music.load(music_path)
+            pygame.mixer.music.load(constants.AUDIO_INFINITE_MODE)
             pygame.mixer.music.play(-1)
-        except:
-            pass
+        except pygame.error as e:
+            print(f"Error loading infinite mode music: {e}")
 
     current_lang = language_manager.get_current_language()
 
@@ -115,9 +114,8 @@ def play_lose_sequence(screen, fonts, secret_word):
     global current_total_score
     pygame.mixer.music.stop()
 
-    loss_audio = os.path.join("assets", "audios", "lose_infinite.mp3")
-    if os.path.exists(loss_audio):
-        pygame.mixer.music.load(loss_audio)
+    if os.path.exists(constants.AUDIO_LOSE_INFINITE):
+        pygame.mixer.music.load(constants.AUDIO_LOSE_INFINITE)
         pygame.mixer.music.play()
 
     if score_manager.check_if_highscore(current_total_score, category="infinite"):

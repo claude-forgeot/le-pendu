@@ -127,7 +127,6 @@ def play_win_sequence(screen, fonts, secret_word, state, time_remaining, hints_u
         pygame.time.delay(10)
 
     win_img_path = os.path.join("assets", "images", "winhard.png")
-    win_audio_path = os.path.join("assets", "audios", "winhard.ogg")
 
     win_img = None
     if os.path.exists(win_img_path):
@@ -136,8 +135,8 @@ def play_win_sequence(screen, fonts, secret_word, state, time_remaining, hints_u
         screen.blit(win_img, (0, 0))
         pygame.display.flip()
 
-    if os.path.exists(win_audio_path):
-        pygame.mixer.music.load(win_audio_path)
+    if os.path.exists(constants.AUDIO_WIN_HARD):
+        pygame.mixer.music.load(constants.AUDIO_WIN_HARD)
         pygame.mixer.music.play()
         while pygame.mixer.music.get_busy():
             for event in pygame.event.get():
@@ -196,7 +195,6 @@ def play_lose_sequence(screen, fonts, secret_word, state):
     pygame.mixer.music.stop()
 
     video_path = constants.VIDEO_LOSE_HARD
-    audio_path = os.path.join("assets", "audios", "losehard.ogg")
 
     cap = cv2.VideoCapture(video_path)
 
@@ -210,10 +208,7 @@ def play_lose_sequence(screen, fonts, secret_word, state):
     if cap:
         fps = cap.get(cv2.CAP_PROP_FPS) or 30
 
-    if os.path.exists(audio_path):
-        pygame.mixer.music.load(audio_path)
-        pygame.mixer.music.play(start=12.0)
-    elif os.path.exists(constants.AUDIO_LOSE_HARD):
+    if os.path.exists(constants.AUDIO_LOSE_HARD):
         pygame.mixer.music.load(constants.AUDIO_LOSE_HARD)
         pygame.mixer.music.play(start=12.0)
 
